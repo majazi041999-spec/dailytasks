@@ -194,23 +194,30 @@ const App: React.FC = () => {
     // Initial Data Load
     useEffect(() => {
         const init = async () => {
+            if (!isAuthenticated || !currentUser) {
+                setIsLoading(false);
+                return;
+            }
+
             setIsLoading(true);
             setConnectionError(false);
             try {
                 const fetchedUsers = await MockBackend.getAllUsers();
                 setUsers(fetchedUsers);
-                if (currentUser) {
-                    await loadUserData(currentUser.id);
-                }
-            } catch (error) {
+                await loadUserData(currentUser.id);
+            } catch (error: any) {
                 console.error("Failed to fetch initial data:", error);
+                if (error?.message === 'UNAUTHORIZED') {
+                    handleLogout();
+                    return;
+                }
                 setConnectionError(true);
             } finally {
                 setIsLoading(false);
             }
         }
         init();
-    }, [currentUser?.id]);
+    }, [currentUser?.id, isAuthenticated]);
 
     // --- REAL-TIME SYNC LOOP (WEBSOCKET + ON-DEMAND FETCH) ---
     useEffect(() => {
@@ -493,7 +500,7 @@ const App: React.FC = () => {
         );
     }
 
-    if (connectionError && !currentUser) {
+    if (connectionError && !currentUser && isAuthenticated) {
         return (
             <div className="min-h-screen flex flex-col items-center justify-center bg-[#f3f4f6] dark:bg-[#0f172a] gap-6 text-center px-4">
                 <div className="bg-red-50 dark:bg-red-900/20 p-6 rounded-full text-red-500">
