@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect, useRef } from 'react';
-import { LayoutDashboard, Calendar, ClipboardList, History, LogOut, BrainCircuit, MessageSquare, Bell, Upload, Volume2, Users, Settings, Moon, Sun, BellRing, X } from 'lucide-react';
+import { LayoutDashboard, Calendar, ClipboardList, History, LogOut, MessageSquare, Bell, Upload, Volume2, Users, Settings, Moon, Sun, BellRing, X, BarChart3 } from 'lucide-react';
 import { User, Notification, Task, CalendarEvent } from '../types';
 import { MockBackend } from '../services/mockBackend';
 
@@ -162,6 +162,7 @@ const Layout: React.FC<LayoutProps> = ({ children, activeTab, onTabChange, curre
         { id: 'calendar', label: 'تقویم', icon: <Calendar size={20} /> },
         { id: 'messages', label: 'پیام‌ها', icon: <MessageSquare size={20} /> },
         { id: 'history', label: 'سوابق', icon: <History size={20} /> },
+        { id: 'analytics', label: 'تحلیل', icon: <BarChart3 size={20} /> },
     ];
 
     if (currentUser.role === 'ADMIN' || currentUser.role === 'SUPER_ADMIN') {
@@ -218,11 +219,9 @@ const Layout: React.FC<LayoutProps> = ({ children, activeTab, onTabChange, curre
             {/* Glass Sidebar */}
             <aside className="w-72 bg-white/40 dark:bg-gray-900/60 backdrop-blur-2xl border-l border-white/20 dark:border-white/10 shadow-[0_0_40px_rgba(0,0,0,0.05)] flex flex-col fixed h-full z-20 right-0 top-0 transition-all">
                 <div className="p-8 flex items-center gap-4">
-                    <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-2xl shadow-lg shadow-blue-500/20 flex items-center justify-center text-white">
-                        <BrainCircuit size={28} />
-                    </div>
+                    <img src="/taskchi-logo.svg" alt="لوگوی تسکچی" className="w-14 h-14 rounded-2xl shadow-lg shadow-orange-500/20 object-cover border border-white/60 dark:border-gray-700" />
                     <div>
-                        <h1 className="text-xl font-black text-gray-800 dark:text-white tracking-tight">Taskchi</h1>
+                        <h1 className="text-xl font-black text-gray-800 dark:text-white tracking-tight">تسکچی</h1>
                         <span className="text-xs text-gray-500 dark:text-gray-400 font-medium tracking-wide">مدیریت به سبک حرفه‌ای ها</span>
                     </div>
                 </div>
