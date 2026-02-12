@@ -2,7 +2,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { User, Message } from '../types';
 import { MockBackend, generateUUID } from '../services/mockBackend';
-import { Send, User as UserIcon, MessageSquare, Edit2, Trash2, X, Check, Search, Trash, Image as ImageIcon, Paperclip, FileText, Download, Phone, Video } from 'lucide-react';
+import { Send, User as UserIcon, MessageSquare, Edit2, Trash2, X, Check, Search, Trash, Image as ImageIcon, Paperclip, FileText, Download, Phone, Video, Mic } from 'lucide-react';
 
 interface ChatSystemProps {
     currentUser: User;
@@ -229,7 +229,7 @@ const ChatSystem: React.FC<ChatSystemProps> = ({ currentUser, users }) => {
                                 className={`flex items-center gap-4 p-4 rounded-[1.5rem] cursor-pointer transition-all duration-300 group ${selectedUser?.id === u.id ? 'bg-white/85 dark:bg-gray-700/85 shadow-lg shadow-blue-900/10 scale-[1.02] border border-white/80 dark:border-blue-900/40 ring-1 ring-blue-300/40' : 'hover:bg-white/40 dark:hover:bg-gray-700/40 hover:scale-[1.02] border border-transparent'}`}
                             >
                                 <div className="relative" onClick={(e) => { e.stopPropagation(); setZoomedImage(u.avatar); }}>
-                                    <img src={u.avatar} className="w-12 h-12 rounded-full object-cover shadow-md border-2 border-white dark:border-gray-600 hover:scale-110 transition-transform duration-300" alt="" />
+                                    <img src={u.avatar} className="w-12 h-12 rounded-full object-cover shadow-md border-2 border-white dark:border-gray-600 hover:scale-110 transition-transform duration-300 ring-2 ring-white/50 dark:ring-gray-500/40" alt="" />
                                     <div className="absolute bottom-0 right-0 w-3.5 h-3.5 bg-green-500 border-2 border-white dark:border-gray-700 rounded-full animate-pulse-slow"></div>
                                 </div>
                                 <div className="flex-1">
@@ -274,6 +274,9 @@ const ChatSystem: React.FC<ChatSystemProps> = ({ currentUser, users }) => {
                                     <button className="p-2.5 rounded-xl bg-white/70 dark:bg-gray-800/70 border border-white/60 dark:border-gray-700 text-indigo-500 hover:scale-105 transition-all" title="تماس تصویری">
                                         <Video size={16} />
                                     </button>
+                                    <button className="p-2.5 rounded-xl bg-white/70 dark:bg-gray-800/70 border border-white/60 dark:border-gray-700 text-emerald-500 hover:scale-105 transition-all" title="ویس">
+                                        <Mic size={16} />
+                                    </button>
                                     <button
                                         onClick={handleDeleteConversation}
                                         className="bg-red-50/90 dark:bg-red-900/20 text-red-500 p-3 rounded-xl hover:bg-red-500 hover:text-white transition-all shadow-sm flex items-center gap-2 text-xs font-bold hover:scale-105 active:scale-95"
@@ -316,6 +319,7 @@ const ChatSystem: React.FC<ChatSystemProps> = ({ currentUser, users }) => {
                                                     <svg className={`absolute top-0 w-4 h-4 ${isMe ? '-right-2 fill-[#2FB350]' : '-left-2 fill-white dark:fill-gray-700'} ${!isMe && 'scale-x-[-1]'}`} viewBox="0 0 10 10">
                                                         <path d="M0 0 L10 0 L0 10 Z" />
                                                     </svg>
+                                                    {isMe && <div className="pointer-events-none absolute inset-x-3 top-1 h-4 rounded-full bg-white/20 blur-md" />}
 
                                                     <div className="px-1 break-words">
                                                         {msg.attachment && (
@@ -397,7 +401,8 @@ const ChatSystem: React.FC<ChatSystemProps> = ({ currentUser, users }) => {
                             </div>
 
                             {/* New Input Area */}
-                            <div className="p-4 bg-white/70 dark:bg-gray-900/70 backdrop-blur-md border-t border-white/30 dark:border-white/10 z-10 flex flex-col gap-2 animate-in slide-in-from-bottom-2 duration-500">
+                            <div className="p-4 bg-white/70 dark:bg-gray-900/70 backdrop-blur-md border-t border-white/30 dark:border-white/10 z-10 flex flex-col gap-2 animate-in slide-in-from-bottom-2 duration-500 relative">
+                                <div className="absolute top-0 left-1/2 -translate-x-1/2 w-24 h-1 rounded-full bg-white/70 dark:bg-gray-600/80" />
 
                                 {/* Preview Area */}
                                 {attachment && (
