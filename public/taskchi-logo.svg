@@ -1,0 +1,83 @@
+<svg width="512" height="512" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bgNight" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#090B35"/>
+      <stop offset="100%" stop-color="#1A1159"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(256 222) rotate(90) scale(220)">
+      <stop offset="0%" stop-color="#7A5BFF" stop-opacity="0.55"/>
+      <stop offset="100%" stop-color="#7A5BFF" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="cardBlue" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#7CA5FF"/>
+      <stop offset="100%" stop-color="#68DEFF"/>
+    </linearGradient>
+    <linearGradient id="purpleEdge" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#4937CC"/>
+      <stop offset="100%" stop-color="#7E5CFF"/>
+    </linearGradient>
+    <filter id="softShadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="12" stdDeviation="10" flood-color="#040621" flood-opacity="0.65"/>
+    </filter>
+  </defs>
+
+  <rect width="512" height="512" rx="56" fill="url(#bgNight)"/>
+  <ellipse cx="256" cy="240" rx="210" ry="150" fill="url(#glow)"/>
+
+  <!-- Outer purple base -->
+  <ellipse cx="256" cy="266" rx="188" ry="120" fill="#1B0D63"/>
+  <ellipse cx="256" cy="266" rx="180" ry="112" fill="#2F1A8A" opacity="0.85"/>
+
+  <!-- Calendar block -->
+  <g transform="translate(64 112) rotate(-9)" filter="url(#softShadow)">
+    <rect x="0" y="0" width="168" height="146" rx="18" fill="#DCE6FF" stroke="#2A1C88" stroke-width="8"/>
+    <rect x="0" y="0" width="168" height="36" rx="16" fill="url(#purpleEdge)"/>
+    <circle cx="36" cy="8" r="10" fill="#140C56"/>
+    <circle cx="84" cy="8" r="10" fill="#140C56"/>
+    <circle cx="132" cy="8" r="10" fill="#140C56"/>
+    <path d="M18 62H150M18 90H150M18 118H150M56 38V140M95 38V140" stroke="#5D72D8" stroke-width="3" opacity="0.65"/>
+    <path d="M30 76L40 86L59 64" stroke="#3B67F6" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M104 106L111 114L127 97" stroke="#6E8CFF" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/>
+  </g>
+
+  <!-- Clock block -->
+  <g transform="translate(324 122)" filter="url(#softShadow)">
+    <circle cx="76" cy="76" r="74" fill="#27117E" stroke="#120A4D" stroke-width="10"/>
+    <circle cx="76" cy="76" r="58" fill="#3D2BA8"/>
+    <circle cx="76" cy="76" r="8" fill="#8FD8FF"/>
+    <path d="M76 76L76 43" stroke="#8FD8FF" stroke-width="7" stroke-linecap="round"/>
+    <path d="M76 76L49 58" stroke="#8FD8FF" stroke-width="7" stroke-linecap="round"/>
+    <path d="M76 76L107 76" stroke="#8FD8FF" stroke-width="6" stroke-linecap="round"/>
+  </g>
+
+  <!-- Character + checklist -->
+  <g transform="translate(168 120)" filter="url(#softShadow)">
+    <path d="M86 184C48 184 18 154 18 116V98C18 60 48 30 86 30C124 30 154 60 154 98V116C154 154 124 184 86 184Z" fill="#0D103A"/>
+    <circle cx="86" cy="72" r="29" fill="#5E7ED6"/>
+    <path d="M66 69C72 78 84 82 97 70" stroke="#0D103A" stroke-width="4" stroke-linecap="round"/>
+
+    <rect x="122" y="90" width="128" height="156" rx="14" fill="#DCE6FF" stroke="#1A2E8E" stroke-width="8" transform="rotate(8 122 90)"/>
+    <g transform="translate(141 121) rotate(8)">
+      <rect x="0" y="0" width="18" height="18" rx="4" fill="url(#cardBlue)"/>
+      <path d="M4 10L8 14L14 6" stroke="#163AB8" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/>
+      <path d="M28 10H79" stroke="#13236F" stroke-width="4" stroke-linecap="round"/>
+
+      <rect x="0" y="36" width="18" height="18" rx="4" fill="url(#cardBlue)"/>
+      <path d="M4 46L8 50L14 42" stroke="#163AB8" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/>
+      <path d="M28 46H79" stroke="#13236F" stroke-width="4" stroke-linecap="round"/>
+
+      <rect x="0" y="72" width="18" height="18" rx="4" fill="url(#cardBlue)"/>
+      <path d="M4 82L8 86L14 78" stroke="#163AB8" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/>
+      <path d="M28 82H79" stroke="#13236F" stroke-width="4" stroke-linecap="round"/>
+    </g>
+  </g>
+
+  <!-- Stars -->
+  <g fill="#7DD7FF" opacity="0.95">
+    <path d="M141 281L147 295L161 301L147 307L141 321L135 307L121 301L135 295Z"/>
+    <path d="M360 294L365 305L376 310L365 315L360 326L355 315L344 310L355 305Z"/>
+    <path d="M208 95L212 104L221 108L212 112L208 121L204 112L195 108L204 104Z"/>
+  </g>
+
+  <text x="256" y="458" text-anchor="middle" fill="#79B7FF" font-size="94" font-family="Vazirmatn, Tahoma, sans-serif" font-weight="800">تسکچی</text>
+</svg>
