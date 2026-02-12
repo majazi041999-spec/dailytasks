@@ -211,6 +211,10 @@ const sendWsToUsers = (userIds, event, payload) => {
   });
 };
 
+const sendWsToAll = (event, payload) => {
+  sendWsToUsers(Array.from(wsClientsByUserId.keys()), event, payload);
+};
+
 const getUserFromToken = async (token) => {
   if (!token) return null;
 
@@ -535,7 +539,9 @@ app.post('/api/users', (req, res) => safeQuery(req, res, async () => {
     'INSERT INTO users (name, username, password_hash, role, avatar, created_by) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *',
     [name, username, passwordHash, role, avatar, createdBy || req.user.id]
   );
-  res.json(toCamel(r.rows[0]));
+  const createdUser = toCamel(r.rows[0]);
+  sendWsToAll('users:changed', { action: 'created', user: createdUser });
+  res.json(createdUser);
 }));
 
 app.put('/api/users/:id', (req, res) => safeQuery(req, res, async () => {
@@ -567,7 +573,9 @@ app.put('/api/users/:id', (req, res) => safeQuery(req, res, async () => {
   }
 
   const r = await pool.query(query, params);
-  res.json(toCamel(r.rows[0]));
+  const updatedUser = toCamel(r.rows[0]);
+  sendWsToAll('users:changed', { action: 'updated', user: updatedUser });
+  res.json(updatedUser);
 }));
 
 app.delete('/api/users/:id', (req, res) => safeQuery(req, res, async () => {
@@ -581,7 +589,9 @@ app.delete('/api/users/:id', (req, res) => safeQuery(req, res, async () => {
     throw err;
   }
 
-  await pool.query('DELETE FROM users WHERE id=$1', [req.params.id]);
+  const deletedUserId = req.params.id;
+  await pool.query('DELETE FROM users WHERE id=$1', [deletedUserId]);
+  sendWsToAll('users:changed', { action: 'deleted', id: deletedUserId });
   res.json({ success: true });
 }));
 
@@ -605,12 +615,16 @@ app.post('/api/tasks', (req, res) => safeQuery(req, res, async () => {
     r = await pool.query(`INSERT INTO tasks (id, title, description, priority, status, assignee_id, assigned_by_id, due_date, tags, subtasks, alarms, updates, rich_description) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13) RETURNING *`,
       [t.id || undefined, t.title, t.description, t.priority, t.status, t.assigneeId, t.assignedById || req.user.id, t.dueDate, t.tags, JSON.stringify(t.subtasks), JSON.stringify(t.alarms), JSON.stringify(t.updates), JSON.stringify(t.richDescription)]);
   }
-  res.json(toCamel(r.rows[0]));
+  const savedTask = toCamel(r.rows[0]);
+  sendWsToAll('tasks:changed', { action: 'upsert', task: savedTask });
+  res.json(savedTask);
 }));
 
 app.delete('/api/tasks/:id', (req, res) => safeQuery(req, res, async () => {
   await requireAuth(req, res);
-  await pool.query('DELETE FROM tasks WHERE id=$1', [req.params.id]);
+  const deletedTaskId = req.params.id;
+  await pool.query('DELETE FROM tasks WHERE id=$1', [deletedTaskId]);
+  sendWsToAll('tasks:changed', { action: 'deleted', id: deletedTaskId });
   res.json({ success: true });
 }));
 
@@ -750,7 +764,9 @@ app.post('/api/notifications', (req, res) => safeQuery(req, res, async () => {
     'INSERT INTO notifications (id, user_id, message, is_read, timestamp, type, related_id) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *',
     [id, userId, message, isRead, timestamp, type, relatedId]
   );
-  res.json(toCamel(r.rows[0]));
+  const createdNotif = toCamel(r.rows[0]);
+  sendWsToUsers([createdNotif.userId], 'notification:new', createdNotif);
+  res.json(createdNotif);
 }));
 
 app.put('/api/notifications/:id/read', (req, res) => safeQuery(req, res, async () => {
@@ -768,7 +784,9 @@ app.put('/api/notifications/:id/read', (req, res) => safeQuery(req, res, async (
   assertSelfOrAdmin(req, currentNotif.userId);
 
   const r = await pool.query('UPDATE notifications SET is_read=TRUE WHERE id=$1 RETURNING *', [req.params.id]);
-  res.json(toCamel(r.rows[0]));
+  const updatedNotif = toCamel(r.rows[0]);
+  sendWsToUsers([updatedNotif.userId], 'notification:updated', updatedNotif);
+  res.json(updatedNotif);
 }));
 
 // Logs
@@ -793,7 +811,9 @@ app.post('/api/logs', (req, res) => safeQuery(req, res, async () => {
     'INSERT INTO action_logs (id, user_id, task_id, action, details, timestamp) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *',
     [id, userId, taskId, action, details, timestamp]
   );
-  res.json(toCamel(r.rows[0]));
+  const createdLog = toCamel(r.rows[0]);
+  sendWsToAll('logs:changed', { action: 'created', log: createdLog });
+  res.json(createdLog);
 }));
 
 const server = http.createServer(app);
