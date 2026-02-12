@@ -67,6 +67,15 @@ const fetchJson = async (url: string, options?: RequestInit, retries = 100, back
     }
 };
 
+
+export const getRealtimeSocketUrl = (): string => {
+    const wsBase = API_URL.replace(/^http/i, 'ws').replace(/\/api$/, '');
+    const token = localStorage.getItem(TOKEN_KEY) || '';
+    return `${wsBase}/ws?token=${encodeURIComponent(token)}`;
+};
+
+export const getAuthToken = (): string | null => localStorage.getItem(TOKEN_KEY);
+
 export const generateUUID = () => {
     if (typeof crypto !== 'undefined' && crypto.randomUUID) {
         return crypto.randomUUID();

@@ -4,6 +4,9 @@ const { createClient } = require('redis');
 const cors = require('cors');
 const bodyParser = require('body-parser');
 const crypto = require('crypto');
+const http = require('http');
+const { WebSocketServer } = require('ws');
+const { URL } = require('url');
 
 // --- SAFETY NET ---
 process.on('uncaughtException', (err) => console.error('⚠️ Uncaught Exception:', err.message));
@@ -169,6 +172,58 @@ redisClient.on('ready', () => { isRedisReady = true; console.log('✅ Redis Conn
   try { await redisClient.connect(); } catch (e) { console.log('ℹ️ Redis optional.'); }
 })();
 
+const wsClientsByUserId = new Map();
+
+const addWsClient = (userId, ws) => {
+  if (!wsClientsByUserId.has(userId)) {
+    wsClientsByUserId.set(userId, new Set());
+  }
+  wsClientsByUserId.get(userId).add(ws);
+};
+
+const removeWsClient = (userId, ws) => {
+  const clients = wsClientsByUserId.get(userId);
+  if (!clients) return;
+  clients.delete(ws);
+  if (clients.size === 0) wsClientsByUserId.delete(userId);
+};
+
+const sendWsToUsers = (userIds, event, payload) => {
+  const envelope = JSON.stringify({ event, payload, timestamp: new Date().toISOString() });
+  [...new Set(userIds.filter(Boolean))].forEach((userId) => {
+    const clients = wsClientsByUserId.get(userId);
+    if (!clients) return;
+    clients.forEach((client) => {
+      if (client.readyState === 1) {
+        client.send(envelope);
+      }
+    });
+  });
+};
+
+const getUserFromToken = async (token) => {
+  if (!token) return null;
+
+  if (isRedisReady) {
+    const cached = await redisClient.get(token);
+    if (cached) return JSON.parse(cached);
+  }
+
+  const result = await pool.query(`
+    SELECT u.* FROM users u
+    JOIN sessions s ON s.user_id = u.id
+    WHERE s.token = $1 AND s.expires_at > NOW()
+  `, [token]);
+
+  if (result.rows.length === 0) return null;
+
+  const user = toCamel(result.rows[0]);
+  if (isRedisReady) {
+    redisClient.set(token, JSON.stringify(user), { EX: 86400 }).catch(() => {});
+  }
+  return user;
+};
+
 const buildErrorResponse = (err, requestId) => {
   const isKnownError = ['UNAUTHORIZED', 'FORBIDDEN', 'VALIDATION_ERROR'].includes(err.message);
   if (isKnownError) {
@@ -207,35 +262,16 @@ const requireAuth = async (req, _res) => {
     throw err;
   }
 
-  if (isRedisReady) {
-    const cached = await redisClient.get(token);
-    if (cached) {
-      req.user = JSON.parse(cached);
-      req.authToken = token;
-      return;
-    }
-  }
-
-  const result = await pool.query(`
-    SELECT u.* FROM users u
-    JOIN sessions s ON s.user_id = u.id
-    WHERE s.token = $1 AND s.expires_at > NOW()
-  `, [token]);
-
-  if (result.rows.length === 0) {
+  const user = await getUserFromToken(token);
+  if (!user) {
     const err = new Error('UNAUTHORIZED');
     err.status = 401;
     err.publicMessage = 'نشست شما منقضی شده است.';
     throw err;
   }
 
-  const user = toCamel(result.rows[0]);
   req.user = user;
   req.authToken = token;
-
-  if (isRedisReady) {
-    redisClient.set(token, JSON.stringify(user), { EX: 86400 }).catch(() => {});
-  }
 };
 
 const requireRoles = (roles) => {
@@ -613,7 +649,9 @@ app.post('/api/messages', (req, res) => safeQuery(req, res, async () => {
     'INSERT INTO messages (id, sender_id, receiver_id, content, is_read, timestamp, attachment, attachment_type, attachment_name) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING *',
     [id, senderId, receiverId, content, isRead, timestamp, attachment, attachmentType, attachmentName]
   );
-  res.json(toCamel(r.rows[0]));
+  const createdMessage = toCamel(r.rows[0]);
+  sendWsToUsers([senderId, receiverId], 'message:new', createdMessage);
+  res.json(createdMessage);
 }));
 
 app.put('/api/messages/:id', (req, res) => safeQuery(req, res, async () => {
@@ -641,7 +679,9 @@ app.put('/api/messages/:id', (req, res) => safeQuery(req, res, async () => {
     'UPDATE messages SET content=COALESCE($1, content), is_read=COALESCE($2, is_read) WHERE id=$3 RETURNING *',
     [content, isRead, req.params.id]
   );
-  res.json(toCamel(r.rows[0]));
+  const updatedMessage = toCamel(r.rows[0]);
+  sendWsToUsers([updatedMessage.senderId, updatedMessage.receiverId], 'message:updated', updatedMessage);
+  res.json(updatedMessage);
 }));
 
 app.delete('/api/messages/:id', (req, res) => safeQuery(req, res, async () => {
@@ -660,7 +700,9 @@ app.delete('/api/messages/:id', (req, res) => safeQuery(req, res, async () => {
     throw err;
   }
 
-  await pool.query('DELETE FROM messages WHERE id=$1', [req.params.id]);
+  const deletedId = req.params.id;
+  await pool.query('DELETE FROM messages WHERE id=$1', [deletedId]);
+  sendWsToUsers([check.rows[0].sender_id, check.rows[0].receiver_id], 'message:deleted', { id: deletedId });
   res.json({ success: true });
 }));
 
@@ -669,6 +711,7 @@ app.delete('/api/messages/conversation', (req, res) => safeQuery(req, res, async
   const { user1, user2 } = req.body;
   assertSelfOrAdmin(req, user1);
   await pool.query('DELETE FROM messages WHERE (sender_id=$1 AND receiver_id=$2) OR (sender_id=$2 AND receiver_id=$1)', [user1, user2]);
+  sendWsToUsers([user1, user2], 'conversation:deleted', { user1, user2 });
   res.json({ success: true });
 }));
 
@@ -743,8 +786,34 @@ app.post('/api/logs', (req, res) => safeQuery(req, res, async () => {
   res.json(toCamel(r.rows[0]));
 }));
 
+const server = http.createServer(app);
+const wss = new WebSocketServer({ server, path: '/ws' });
+
+wss.on('connection', async (ws, req) => {
+  try {
+    const requestUrl = new URL(req.url, `http://${req.headers.host}`);
+    const token = requestUrl.searchParams.get('token');
+    const user = await getUserFromToken(token);
+
+    if (!user) {
+      ws.close(1008, 'Unauthorized');
+      return;
+    }
+
+    ws.userId = user.id;
+    addWsClient(user.id, ws);
+    ws.send(JSON.stringify({ event: 'connection:ready', payload: { userId: user.id } }));
+
+    ws.on('close', () => {
+      removeWsClient(user.id, ws);
+    });
+  } catch (e) {
+    ws.close(1011, 'Server Error');
+  }
+});
+
 // Start Server
-app.listen(port, () => {
+server.listen(port, () => {
   console.log(`✅ Backend Server STARTED at http://localhost:${port}`);
   initDb();
 });

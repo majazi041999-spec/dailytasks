@@ -1,8 +1,8 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { User, Message } from '../types';
-import { MockBackend, generateUUID } from '../services/mockBackend';
-import { Send, User as UserIcon, MessageSquare, Edit2, Trash2, X, Check, Search, Trash, Image as ImageIcon, Paperclip, FileText, Download, Phone, Video, Mic } from 'lucide-react';
+import { MockBackend, generateUUID, getRealtimeSocketUrl } from '../services/mockBackend';
+import { Send, User as UserIcon, MessageSquare, Edit2, Trash2, X, Check, Search, Trash, Image as ImageIcon, Paperclip, FileText, Download } from 'lucide-react';
 
 interface ChatSystemProps {
     currentUser: User;
@@ -25,8 +25,36 @@ const ChatSystem: React.FC<ChatSystemProps> = ({ currentUser, users }) => {
 
     const messagesEndRef = useRef<HTMLDivElement>(null);
     const inputRef = useRef<HTMLInputElement>(null);
+    const socketRef = useRef<WebSocket | null>(null);
+    const reconnectRef = useRef<number | null>(null);
 
     const availableUsers = users.filter(u => u.id !== currentUser.id && u.name.toLowerCase().includes(searchTerm.toLowerCase()));
+
+    const mergeConversation = (list: Message[], peerId: string) => {
+        const conversation = list
+            .filter(m =>
+                (m.senderId === currentUser.id && m.receiverId === peerId) ||
+                (m.senderId === peerId && m.receiverId === currentUser.id)
+            )
+            .sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());
+        setMessages(conversation);
+    };
+
+    const upsertMessage = (incoming: Message) => {
+        if (!selectedUser) return;
+        setMessages(prev => {
+            const inConversation =
+                (incoming.senderId === currentUser.id && incoming.receiverId === selectedUser.id) ||
+                (incoming.senderId === selectedUser.id && incoming.receiverId === currentUser.id);
+            if (!inConversation) return prev;
+
+            const existingIndex = prev.findIndex(m => m.id === incoming.id);
+            const next = [...prev];
+            if (existingIndex >= 0) next[existingIndex] = incoming;
+            else next.push(incoming);
+            return next.sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());
+        });
+    };
 
     useEffect(() => {
         if (selectedUser) {
@@ -38,40 +66,99 @@ const ChatSystem: React.FC<ChatSystemProps> = ({ currentUser, users }) => {
     }, [users, selectedUser]);
 
     useEffect(() => {
-        const fetchMessages = async () => {
-            if (selectedUser) {
-                try {
-                    const allMsgs = await MockBackend.getMessages(currentUser.id);
-                    const conversation = allMsgs.filter(m =>
-                        (m.senderId === currentUser.id && m.receiverId === selectedUser.id) ||
-                        (m.senderId === selectedUser.id && m.receiverId === currentUser.id)
-                    ).sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());
+        const loadInitialConversation = async () => {
+            if (!selectedUser) {
+                setMessages([]);
+                return;
+            }
 
-                    // Mark incoming unread messages as read for real read receipts
-                    const unreadIncoming = conversation.filter(m =>
-                        m.senderId === selectedUser.id &&
-                        m.receiverId === currentUser.id &&
-                        !m.isRead
-                    );
+            try {
+                const allMsgs = await MockBackend.getMessages(currentUser.id);
+                mergeConversation(allMsgs, selectedUser.id);
 
-                    if (unreadIncoming.length > 0) {
-                        await Promise.all(
-                            unreadIncoming.map(m => MockBackend.updateMessage({ ...m, isRead: true }))
-                        );
-                        setMessages(conversation.map(m =>
-                            unreadIncoming.some(u => u.id === m.id) ? { ...m, isRead: true } : m
-                        ));
-                    } else {
-                        setMessages(conversation);
-                    }
-                } catch (e) {
-                    console.error("Error polling messages:", e);
+                const unreadIncoming = allMsgs.filter(m =>
+                    m.senderId === selectedUser.id &&
+                    m.receiverId === currentUser.id &&
+                    !m.isRead
+                );
+
+                if (unreadIncoming.length > 0) {
+                    await Promise.all(unreadIncoming.map(m => MockBackend.updateMessage({ ...m, isRead: true })));
                 }
+            } catch (e) {
+                console.error('Error loading conversation:', e);
             }
         };
-        fetchMessages();
-        const interval = setInterval(fetchMessages, 2000);
-        return () => clearInterval(interval);
+
+        loadInitialConversation();
+    }, [selectedUser, currentUser.id]);
+
+    useEffect(() => {
+        const connectSocket = () => {
+            if (!selectedUser) return;
+
+            const socketUrl = getRealtimeSocketUrl();
+            const ws = new WebSocket(socketUrl);
+            socketRef.current = ws;
+
+            ws.onmessage = async (event) => {
+                try {
+                    const data = JSON.parse(event.data);
+                    const { event: eventName, payload } = data;
+
+                    if (eventName === 'message:new') {
+                        upsertMessage(payload as Message);
+
+                        const incoming = payload as Message;
+                        if (
+                            incoming.senderId === selectedUser.id &&
+                            incoming.receiverId === currentUser.id &&
+                            !incoming.isRead
+                        ) {
+                            await MockBackend.updateMessage({ ...incoming, isRead: true });
+                        }
+                    }
+
+                    if (eventName === 'message:updated') {
+                        upsertMessage(payload as Message);
+                    }
+
+                    if (eventName === 'message:deleted') {
+                        setMessages(prev => prev.filter(m => m.id !== payload.id));
+                    }
+
+                    if (eventName === 'conversation:deleted') {
+                        const user1 = payload.user1;
+                        const user2 = payload.user2;
+                        if (
+                            (user1 === currentUser.id && selectedUser && user2 === selectedUser.id) ||
+                            (user2 === currentUser.id && selectedUser && user1 === selectedUser.id)
+                        ) {
+                            setMessages([]);
+                        }
+                    }
+                } catch (err) {
+                    console.error('WebSocket payload error:', err);
+                }
+            };
+
+            ws.onclose = () => {
+                if (reconnectRef.current) window.clearTimeout(reconnectRef.current);
+                reconnectRef.current = window.setTimeout(connectSocket, 1500);
+            };
+        };
+
+        connectSocket();
+
+        return () => {
+            if (reconnectRef.current) window.clearTimeout(reconnectRef.current);
+            reconnectRef.current = null;
+            if (socketRef.current) {
+                socketRef.current.onclose = null;
+                socketRef.current.close();
+                socketRef.current = null;
+            }
+        };
     }, [selectedUser, currentUser.id]);
 
     useEffect(() => {
@@ -128,7 +215,7 @@ const ChatSystem: React.FC<ChatSystemProps> = ({ currentUser, users }) => {
         const updatedMsg = { ...msg, content: editContent };
         try {
             await MockBackend.updateMessage(updatedMsg);
-            setMessages(messages.map(m => m.id === msg.id ? updatedMsg : m));
+            setMessages(prev => prev.map(m => m.id === msg.id ? updatedMsg : m));
             setEditingMessageId(null);
         } catch (err) {
             console.error("Failed to update message", err);
@@ -140,7 +227,7 @@ const ChatSystem: React.FC<ChatSystemProps> = ({ currentUser, users }) => {
         if(!window.confirm('آیا از حذف این پیام اطمینان دارید؟')) return;
         try {
             await MockBackend.deleteMessage(msgId);
-            setMessages(messages.filter(m => m.id !== msgId));
+            setMessages(prev => prev.filter(m => m.id !== msgId));
         } catch (err) {
             console.error("Failed to delete message", err);
             alert("خطا در حذف پیام.");
