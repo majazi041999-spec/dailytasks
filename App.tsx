@@ -39,6 +39,7 @@ const App: React.FC = () => {
     const [logs, setLogs] = useState<ActionLog[]>([]);
     const [notifications, setNotifications] = useState<Notification[]>([]);
     const [unreadNotifCount, setUnreadNotifCount] = useState(0);
+    const [onlineUserIds, setOnlineUserIds] = useState<string[]>([]);
     const [showNotifPanel, setShowNotifPanel] = useState(false);
 
     // History Expansion State
@@ -233,6 +234,7 @@ const App: React.FC = () => {
                 await syncNotifications();
                 setTasks(await MockBackend.getTasks());
                 setUsers(await MockBackend.getAllUsers());
+                setOnlineUserIds(await MockBackend.getOnlineUserIds());
                 if (activeTab === 'history') {
                     setLogs(await MockBackend.getLogs());
                 }
@@ -259,6 +261,19 @@ const App: React.FC = () => {
 
                         if (eventName === 'users:changed') {
                             setUsers(await MockBackend.getAllUsers());
+                        }
+
+                        if (eventName === 'presence:changed') {
+                            const changedUserId = payload?.userId;
+                            const isOnline = payload?.isOnline;
+                            if (changedUserId) {
+                                setOnlineUserIds(prev => {
+                                    if (isOnline) {
+                                        return prev.includes(changedUserId) ? prev : [...prev, changedUserId];
+                                    }
+                                    return prev.filter(id => id !== changedUserId);
+                                });
+                            }
                         }
 
                         if (eventName === 'tasks:changed') {
@@ -784,7 +799,7 @@ const App: React.FC = () => {
                 )}
 
                 {activeTab === 'messages' && (
-                    <ChatSystem currentUser={currentUser} users={users} />
+                    <ChatSystem currentUser={currentUser} users={users} onlineUserIds={onlineUserIds} />
                 )}
 
                 {activeTab === 'list' && (() => {
@@ -835,7 +850,7 @@ const App: React.FC = () => {
                 )}
 
                 {activeTab === 'users' && (currentUser.role === 'ADMIN' || currentUser.role === 'SUPER_ADMIN') && (
-                    <UserManagement currentUser={currentUser} allUsers={users} onRefreshUsers={refreshUsers} />
+                    <UserManagement currentUser={currentUser} allUsers={users} onRefreshUsers={refreshUsers} onlineUserIds={onlineUserIds} />
                 )}
 
                 {activeTab === 'settings' && (

@@ -7,9 +7,10 @@ import { Send, User as UserIcon, MessageSquare, Edit2, Trash2, X, Check, Search,
 interface ChatSystemProps {
     currentUser: User;
     users: User[];
+    onlineUserIds?: string[];
 }
 
-const ChatSystem: React.FC<ChatSystemProps> = ({ currentUser, users }) => {
+const ChatSystem: React.FC<ChatSystemProps> = ({ currentUser, users, onlineUserIds = [] }) => {
     const [selectedUser, setSelectedUser] = useState<User | null>(null);
     const [messages, setMessages] = useState<Message[]>([]);
     const [newMessage, setNewMessage] = useState('');
@@ -29,6 +30,8 @@ const ChatSystem: React.FC<ChatSystemProps> = ({ currentUser, users }) => {
     const reconnectRef = useRef<number | null>(null);
 
     const availableUsers = users.filter(u => u.id !== currentUser.id && u.name.toLowerCase().includes(searchTerm.toLowerCase()));
+
+    const isUserOnline = (userId: string) => onlineUserIds.includes(userId);
 
     const mergeConversation = (list: Message[], peerId: string) => {
         const conversation = list
@@ -334,7 +337,7 @@ const ChatSystem: React.FC<ChatSystemProps> = ({ currentUser, users }) => {
                             >
                                 <div className="relative" onClick={(e) => { e.stopPropagation(); setZoomedImage(u.avatar); }}>
                                     <img src={u.avatar} className="w-12 h-12 rounded-full object-cover shadow-md border-2 border-white dark:border-gray-600 hover:scale-110 transition-transform duration-300 ring-2 ring-white/50 dark:ring-gray-500/40" alt="" />
-                                    <div className="absolute bottom-0 right-0 w-3.5 h-3.5 bg-green-500 border-2 border-white dark:border-gray-700 rounded-full animate-pulse-slow"></div>
+                                    <div className={`absolute bottom-0 right-0 w-3.5 h-3.5 border-2 border-white dark:border-gray-700 rounded-full ${isUserOnline(u.id) ? 'bg-green-500 animate-pulse-slow' : 'bg-gray-400'}`}></div>
                                 </div>
                                 <div className="flex-1">
                                     <div className="flex justify-between items-center mb-1">
@@ -360,13 +363,13 @@ const ChatSystem: React.FC<ChatSystemProps> = ({ currentUser, users }) => {
                                 <div className="flex items-center gap-4">
                                     <div className="relative cursor-pointer group" onClick={() => setZoomedImage(selectedUser.avatar)}>
                                         <img src={selectedUser.avatar} className="w-12 h-12 rounded-full shadow-md border-2 border-white dark:border-gray-700 group-hover:scale-110 transition-transform duration-300" alt="" />
-                                        <div className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 border-2 border-white dark:border-gray-900 rounded-full animate-pulse"></div>
+                                        <div className={`absolute bottom-0 right-0 w-3 h-3 border-2 border-white dark:border-gray-900 rounded-full ${isUserOnline(selectedUser.id) ? 'bg-green-500 animate-pulse' : 'bg-gray-400'}`}></div>
                                     </div>
                                     <div>
                                         <h3 className="font-bold text-gray-900 dark:text-white text-lg">{selectedUser.name}</h3>
-                                        <div className="flex items-center gap-1 text-xs text-green-600 dark:text-green-400 font-bold">
-                                            <span className="w-1.5 h-1.5 bg-green-500 rounded-full"></span>
-                                            آنلاین
+                                        <div className={`flex items-center gap-1 text-xs font-bold ${isUserOnline(selectedUser.id) ? 'text-green-600 dark:text-green-400' : 'text-gray-500 dark:text-gray-400'}`}>
+                                            <span className={`w-1.5 h-1.5 rounded-full ${isUserOnline(selectedUser.id) ? 'bg-green-500' : 'bg-gray-400'}`}></span>
+                                            {isUserOnline(selectedUser.id) ? 'آنلاین' : 'آفلاین'}
                                         </div>
                                     </div>
                                 </div>

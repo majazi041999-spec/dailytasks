@@ -147,6 +147,11 @@ export const MockBackend = {
         return fetchJson('/users');
     },
 
+    getOnlineUserIds: async (): Promise<string[]> => {
+        const response = await fetchJson('/presence');
+        return response?.onlineUserIds || [];
+    },
+
     saveUser: async (user: any): Promise<User> => {
         return fetchJson('/users', {
             method: 'POST',

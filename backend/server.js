@@ -215,6 +215,9 @@ const sendWsToAll = (event, payload) => {
   sendWsToUsers(Array.from(wsClientsByUserId.keys()), event, payload);
 };
 
+const getOnlineUserIds = () => Array.from(wsClientsByUserId.keys());
+const isUserOnline = (userId) => wsClientsByUserId.has(userId);
+
 const getUserFromToken = async (token) => {
   if (!token) return null;
 
@@ -520,6 +523,11 @@ app.get('/api/users', (req, res) => safeQuery(req, res, async () => {
   await requireAuth(req, res);
   const r = await pool.query('SELECT * FROM users ORDER BY created_at DESC');
   res.json(toCamel(r.rows));
+}));
+
+app.get('/api/presence', (req, res) => safeQuery(req, res, async () => {
+  await requireAuth(req, res);
+  res.json({ onlineUserIds: getOnlineUserIds() });
 }));
 
 app.post('/api/users', (req, res) => safeQuery(req, res, async () => {
@@ -831,11 +839,19 @@ wss.on('connection', async (ws, req) => {
     }
 
     ws.userId = user.id;
+    const wasOnline = isUserOnline(user.id);
     addWsClient(user.id, ws);
     ws.send(JSON.stringify({ event: 'connection:ready', payload: { userId: user.id } }));
 
+    if (!wasOnline) {
+      sendWsToAll('presence:changed', { userId: user.id, isOnline: true });
+    }
+
     ws.on('close', () => {
       removeWsClient(user.id, ws);
+      if (!isUserOnline(user.id)) {
+        sendWsToAll('presence:changed', { userId: user.id, isOnline: false });
+      }
     });
   } catch (e) {
     ws.close(1011, 'Server Error');
