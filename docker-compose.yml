@@ -7,7 +7,7 @@ services:
     depends_on:
       - backend
     environment:
-      - REACT_APP_API_URL=http://localhost:3001/api
+      - VITE_API_BASE_URL=http://localhost:3001/api
 
   # Node.js Backend
   backend:
@@ -27,6 +27,7 @@ services:
       - DB_PASSWORD=password
       - DB_NAME=modiriat_db
       - REDIS_URL=redis://redis:6379
+      - CORS_ORIGIN=http://localhost:3000
     command: sh -c "npm install && npm start"
 
   # PostgreSQL Database
