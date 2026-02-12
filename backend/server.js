@@ -27,6 +27,34 @@ const ALLOWED_ORIGINS = (process.env.CORS_ORIGIN || 'http://localhost:3000,http:
 
 const allowAllCors = ALLOWED_ORIGINS.includes('*');
 
+
+const isPrivateLanHostname = (hostname = '') => {
+  if (!hostname) return false;
+  if (hostname === 'localhost') return true;
+  if (/^127\./.test(hostname)) return true;
+  if (/^10\./.test(hostname)) return true;
+  if (/^192\.168\./.test(hostname)) return true;
+  const match172 = hostname.match(/^172\.(\d+)\./);
+  if (match172) {
+    const second = Number(match172[1]);
+    return second >= 16 && second <= 31;
+  }
+  return false;
+};
+
+const isDevLanOriginAllowed = (origin) => {
+  try {
+    const parsed = new URL(origin);
+    const allowedPorts = new Set(['3000', '5173', '4173']);
+    return (parsed.protocol === 'http:' || parsed.protocol === 'https:')
+      && allowedPorts.has(parsed.port)
+      && isPrivateLanHostname(parsed.hostname);
+  } catch (e) {
+    return false;
+  }
+};
+
+
 // Middleware
 app.use(cors({
   origin: (origin, callback) => {
@@ -36,12 +64,12 @@ app.use(cors({
     }
 
     const normalizedRequestOrigin = normalizeOrigin(origin);
-    if (ALLOWED_ORIGINS.includes(normalizedRequestOrigin)) {
+    if (ALLOWED_ORIGINS.includes(normalizedRequestOrigin) || isDevLanOriginAllowed(normalizedRequestOrigin)) {
       callback(null, true);
       return;
     }
 
-    callback(new Error('Not allowed by CORS'));
+    callback(new Error(`Not allowed by CORS: ${normalizedRequestOrigin}`));
   },
   credentials: false,
 }));

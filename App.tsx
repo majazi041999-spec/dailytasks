@@ -81,6 +81,7 @@ const App: React.FC = () => {
     const audioRef = useRef<HTMLAudioElement | null>(null);
     const appSocketRef = useRef<WebSocket | null>(null);
     const reconnectAppSocketRef = useRef<number | null>(null);
+    const activeTabRef = useRef(activeTab);
 
     const [toastData, setToastData] = useState<Notification | null>(null);
     const [isToastVisible, setIsToastVisible] = useState(false);
@@ -155,6 +156,10 @@ const App: React.FC = () => {
         setShowFilters(false);
     }, [activeTab]);
 
+    useEffect(() => {
+        activeTabRef.current = activeTab;
+    }, [activeTab]);
+
     // --- BACKGROUND SESSION CHECK ---
     useEffect(() => {
         const token = localStorage.getItem('modiriat_token_v3');
@@ -210,6 +215,7 @@ const App: React.FC = () => {
     // --- REAL-TIME SYNC LOOP (WEBSOCKET + ON-DEMAND FETCH) ---
     useEffect(() => {
         if (!currentUser) return;
+        let shouldReconnect = true;
 
         const syncNotifications = async () => {
             const notifs = await MockBackend.getNotifications(currentUser.id);
@@ -280,7 +286,7 @@ const App: React.FC = () => {
                             setTasks(await MockBackend.getTasks());
                         }
 
-                        if (eventName === 'logs:changed' && activeTab === 'history') {
+                        if (eventName === 'logs:changed' && activeTabRef.current === 'history') {
                             setLogs(await MockBackend.getLogs());
                         }
                     } catch (err) {
@@ -289,6 +295,7 @@ const App: React.FC = () => {
                 };
 
                 ws.onclose = () => {
+                    if (!shouldReconnect) return;
                     if (reconnectAppSocketRef.current) window.clearTimeout(reconnectAppSocketRef.current);
                     reconnectAppSocketRef.current = window.setTimeout(connectAppSocket, 1500);
                 };
@@ -302,15 +309,22 @@ const App: React.FC = () => {
         connectAppSocket();
 
         return () => {
+            shouldReconnect = false;
             if (reconnectAppSocketRef.current) window.clearTimeout(reconnectAppSocketRef.current);
             reconnectAppSocketRef.current = null;
             if (appSocketRef.current) {
-                appSocketRef.current.onclose = null;
-                appSocketRef.current.close();
+                const ws = appSocketRef.current;
+                ws.onclose = null;
+                if (ws.readyState === WebSocket.OPEN) {
+                    ws.close();
+                } else if (ws.readyState === WebSocket.CONNECTING) {
+                    ws.onopen = () => ws.close();
+                    ws.onerror = () => {};
+                }
                 appSocketRef.current = null;
             }
         };
-    }, [currentUser, activeTab]);
+    }, [currentUser]);
 
     const safePlaySound = () => {
         if (audioRef.current) {
