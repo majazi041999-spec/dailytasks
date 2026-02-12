@@ -19,18 +19,28 @@ const port = 3001;
 let isDbReady = false;
 let isRedisReady = false;
 
-const ALLOWED_ORIGINS = (process.env.CORS_ORIGIN || 'http://localhost:3000,http://127.0.0.1:3000')
+const normalizeOrigin = (origin) => (origin || '').trim().replace(/\/$/, '');
+const ALLOWED_ORIGINS = (process.env.CORS_ORIGIN || 'http://localhost:3000,http://127.0.0.1:3000,http://localhost:5173,http://127.0.0.1:5173')
   .split(',')
-  .map(origin => origin.trim())
+  .map(normalizeOrigin)
   .filter(Boolean);
+
+const allowAllCors = ALLOWED_ORIGINS.includes('*');
 
 // Middleware
 app.use(cors({
   origin: (origin, callback) => {
-    if (!origin || ALLOWED_ORIGINS.includes(origin)) {
+    if (!origin || allowAllCors) {
       callback(null, true);
       return;
     }
+
+    const normalizedRequestOrigin = normalizeOrigin(origin);
+    if (ALLOWED_ORIGINS.includes(normalizedRequestOrigin)) {
+      callback(null, true);
+      return;
+    }
+
     callback(new Error('Not allowed by CORS'));
   },
   credentials: false,
