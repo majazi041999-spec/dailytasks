@@ -2,7 +2,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import Layout from './components/Layout';
 import Login from './components/Login';
-import { MockBackend } from './services/mockBackend';
+import { MockBackend, getRealtimeSocketUrl } from './services/mockBackend';
 import { Task, User, TaskStatus, ActionLog, Priority, Notification } from './types';
 import TaskCard from './components/TaskCard';
 import TaskModal from './components/TaskModal';
@@ -77,6 +77,8 @@ const App: React.FC = () => {
     const lastNotifIdRef = useRef<string | null>(null);
     const isFirstLoadRef = useRef(true);
     const audioRef = useRef<HTMLAudioElement | null>(null);
+    const appSocketRef = useRef<WebSocket | null>(null);
+    const reconnectAppSocketRef = useRef<number | null>(null);
 
     const [toastData, setToastData] = useState<Notification | null>(null);
     const [isToastVisible, setIsToastVisible] = useState(false);
@@ -203,52 +205,96 @@ const App: React.FC = () => {
         init();
     }, [currentUser?.id]);
 
-    // --- REAL-TIME POLLING LOOP (EVERY 2 SECONDS) ---
+    // --- REAL-TIME SYNC LOOP (WEBSOCKET + ON-DEMAND FETCH) ---
     useEffect(() => {
         if (!currentUser) return;
 
-        const pollData = async () => {
-            try {
-                // 1. Fetch Notifications
-                const notifs = await MockBackend.getNotifications(currentUser.id);
-                const sortedNotifs = notifs.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+        const syncNotifications = async () => {
+            const notifs = await MockBackend.getNotifications(currentUser.id);
+            const sortedNotifs = notifs.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
 
-                if (sortedNotifs.length > 0) {
-                    const newest = sortedNotifs[0];
-                    if (newest.id !== lastNotifIdRef.current) {
-                        if (!isFirstLoadRef.current && !newest.isRead) {
-                            triggerNotification(newest);
-                        }
-                        lastNotifIdRef.current = newest.id;
+            if (sortedNotifs.length > 0) {
+                const newest = sortedNotifs[0];
+                if (newest.id !== lastNotifIdRef.current) {
+                    if (!isFirstLoadRef.current && !newest.isRead) {
+                        triggerNotification(newest);
                     }
+                    lastNotifIdRef.current = newest.id;
                 }
-                isFirstLoadRef.current = false;
-                setNotifications(sortedNotifs);
-                setUnreadNotifCount(sortedNotifs.filter(n => !n.isRead).length);
+            }
+            isFirstLoadRef.current = false;
+            setNotifications(sortedNotifs);
+            setUnreadNotifCount(sortedNotifs.filter(n => !n.isRead).length);
+        };
 
-                // 2. Fetch Tasks
-                const fetchedTasks = await MockBackend.getTasks();
-                setTasks(fetchedTasks);
-
-                // 3. Fetch Users (To ensure names/avatars/roles are up to date in Chat)
-                const fetchedUsers = await MockBackend.getAllUsers();
-                setUsers(fetchedUsers);
-
-                // 4. Fetch Logs (If on History tab)
+        const initialSync = async () => {
+            try {
+                await syncNotifications();
+                setTasks(await MockBackend.getTasks());
+                setUsers(await MockBackend.getAllUsers());
                 if (activeTab === 'history') {
-                    const fetchedLogs = await MockBackend.getLogs();
-                    setLogs(fetchedLogs);
+                    setLogs(await MockBackend.getLogs());
                 }
-
             } catch (e) {
                 // Silent fail
             }
         };
 
-        pollData();
-        const interval = setInterval(pollData, 2000);
-        return () => clearInterval(interval);
-    }, [currentUser, activeTab, editingTask]);
+        const connectAppSocket = () => {
+            try {
+                const ws = new WebSocket(getRealtimeSocketUrl());
+                appSocketRef.current = ws;
+
+                ws.onmessage = async (event) => {
+                    try {
+                        const { event: eventName, payload } = JSON.parse(event.data);
+
+                        if (eventName === 'notification:new' || eventName === 'notification:updated') {
+                            const notificationUserId = payload?.userId;
+                            if (!notificationUserId || notificationUserId === currentUser.id) {
+                                await syncNotifications();
+                            }
+                        }
+
+                        if (eventName === 'users:changed') {
+                            setUsers(await MockBackend.getAllUsers());
+                        }
+
+                        if (eventName === 'tasks:changed') {
+                            setTasks(await MockBackend.getTasks());
+                        }
+
+                        if (eventName === 'logs:changed' && activeTab === 'history') {
+                            setLogs(await MockBackend.getLogs());
+                        }
+                    } catch (err) {
+                        console.error('App socket event parse error:', err);
+                    }
+                };
+
+                ws.onclose = () => {
+                    if (reconnectAppSocketRef.current) window.clearTimeout(reconnectAppSocketRef.current);
+                    reconnectAppSocketRef.current = window.setTimeout(connectAppSocket, 1500);
+                };
+            } catch (e) {
+                if (reconnectAppSocketRef.current) window.clearTimeout(reconnectAppSocketRef.current);
+                reconnectAppSocketRef.current = window.setTimeout(connectAppSocket, 1500);
+            }
+        };
+
+        initialSync();
+        connectAppSocket();
+
+        return () => {
+            if (reconnectAppSocketRef.current) window.clearTimeout(reconnectAppSocketRef.current);
+            reconnectAppSocketRef.current = null;
+            if (appSocketRef.current) {
+                appSocketRef.current.onclose = null;
+                appSocketRef.current.close();
+                appSocketRef.current = null;
+            }
+        };
+    }, [currentUser, activeTab]);
 
     const safePlaySound = () => {
         if (audioRef.current) {
