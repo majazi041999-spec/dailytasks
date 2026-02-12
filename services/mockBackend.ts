@@ -1,10 +1,11 @@
 
 import { Task, TaskStatus, Priority, User, ActionLog, Message, CalendarEvent, Notification, UserRole } from '../types';
 
-// Use window.location.hostname to allow access from other devices on the network
-// Fallback to 'localhost' if hostname is missing (e.g. unexpected environment)
+const apiBaseFromEnv = import.meta.env.VITE_API_BASE_URL as string | undefined;
+
+// Fallback to current hostname for easy LAN testing in local environments
 const hostname = window.location.hostname || 'localhost';
-const API_URL = `http://${hostname}:3001/api`;
+const API_URL = apiBaseFromEnv || `http://${hostname}:3001/api`;
 
 const TOKEN_KEY = 'modiriat_token_v3';
 const USER_KEY = 'modiriat_user_v3';
@@ -65,6 +66,15 @@ const fetchJson = async (url: string, options?: RequestInit, retries = 100, back
         throw err;
     }
 };
+
+
+export const getRealtimeSocketUrl = (): string => {
+    const wsBase = API_URL.replace(/^http/i, 'ws').replace(/\/api$/, '');
+    const token = localStorage.getItem(TOKEN_KEY) || '';
+    return `${wsBase}/ws?token=${encodeURIComponent(token)}`;
+};
+
+export const getAuthToken = (): string | null => localStorage.getItem(TOKEN_KEY);
 
 export const generateUUID = () => {
     if (typeof crypto !== 'undefined' && crypto.randomUUID) {

@@ -15,6 +15,13 @@ View your app in AI Studio: https://ai.studio/apps/drive/18liUT3pza0r566nbAc1p9w
 
 1. Install dependencies:
    `npm install`
-2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
+2. (Optional) Set your frontend env in `.env.local`:
+   - `VITE_API_BASE_URL=http://localhost:3001/api`
 3. Run the app:
    `npm run dev`
+
+## Backend security notes
+
+- CORS origins can be restricted with `CORS_ORIGIN` (comma-separated, e.g. `http://localhost:3000,http://localhost:5173`).
+- Login endpoint is rate-limited.
+- Passwords are stored with scrypt hashing (legacy plain-text values are automatically upgraded on successful login).
