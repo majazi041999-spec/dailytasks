@@ -499,7 +499,19 @@ app.put('/api/users/:id', (req, res) => safeQuery(req, res, async () => {
   const { id } = req.params;
   const { name, username, role, avatar, password } = req.body;
 
-  const params = [name, username, role, avatar, id];
+  const isAdmin = ['SUPER_ADMIN', 'ADMIN'].includes(req.user.role);
+  const targetIsSelf = req.user.id === id;
+  const nextRole = role || req.user.role;
+
+  if (!isAdmin && nextRole !== req.user.role) {
+    const err = new Error('FORBIDDEN');
+    err.status = 403;
+    err.publicMessage = 'امکان تغییر نقش کاربری برای شما وجود ندارد.';
+    throw err;
+  }
+
+  const safeRole = targetIsSelf && !isAdmin ? req.user.role : nextRole;
+  const params = [name, username, safeRole, avatar, id];
   let query = 'UPDATE users SET name=$1, username=$2, role=$3, avatar=$4 WHERE id=$5 RETURNING *';
 
   if (password) {
@@ -607,25 +619,47 @@ app.post('/api/messages', (req, res) => safeQuery(req, res, async () => {
 app.put('/api/messages/:id', (req, res) => safeQuery(req, res, async () => {
   await requireAuth(req, res);
   const { content, isRead } = req.body;
-  const r = await pool.query(
-    'UPDATE messages SET content=COALESCE($1, content), is_read=COALESCE($2, is_read) WHERE id=$3 RETURNING *',
-    [content, isRead, req.params.id]
-  );
-  if (!r.rows[0]) {
+
+  const check = await pool.query('SELECT * FROM messages WHERE id=$1', [req.params.id]);
+  if (!check.rows[0]) {
     const err = new Error('VALIDATION_ERROR');
     err.status = 404;
     err.publicMessage = 'پیام مورد نظر یافت نشد.';
     throw err;
   }
-  const updated = toCamel(r.rows[0]);
-  assertSelfOrAdmin(req, updated.senderId);
-  res.json(updated);
+
+  const message = toCamel(check.rows[0]);
+  const canEdit = req.user.id === message.senderId || req.user.id === message.receiverId || ['SUPER_ADMIN', 'ADMIN'].includes(req.user.role);
+  if (!canEdit) {
+    const err = new Error('FORBIDDEN');
+    err.status = 403;
+    err.publicMessage = 'شما اجازه ویرایش این پیام را ندارید.';
+    throw err;
+  }
+
+  const r = await pool.query(
+    'UPDATE messages SET content=COALESCE($1, content), is_read=COALESCE($2, is_read) WHERE id=$3 RETURNING *',
+    [content, isRead, req.params.id]
+  );
+  res.json(toCamel(r.rows[0]));
 }));
 
 app.delete('/api/messages/:id', (req, res) => safeQuery(req, res, async () => {
   await requireAuth(req, res);
-  const check = await pool.query('SELECT sender_id FROM messages WHERE id=$1', [req.params.id]);
-  if (check.rows[0]) assertSelfOrAdmin(req, check.rows[0].sender_id);
+  const check = await pool.query('SELECT sender_id, receiver_id FROM messages WHERE id=$1', [req.params.id]);
+
+  if (!check.rows[0]) {
+    return res.json({ success: true });
+  }
+
+  const canDelete = req.user.id === check.rows[0].sender_id || req.user.id === check.rows[0].receiver_id || ['SUPER_ADMIN', 'ADMIN'].includes(req.user.role);
+  if (!canDelete) {
+    const err = new Error('FORBIDDEN');
+    err.status = 403;
+    err.publicMessage = 'شما اجازه حذف این پیام را ندارید.';
+    throw err;
+  }
+
   await pool.query('DELETE FROM messages WHERE id=$1', [req.params.id]);
   res.json({ success: true });
 }));
@@ -650,13 +684,15 @@ app.get('/api/notifications', (req, res) => safeQuery(req, res, async () => {
 app.post('/api/notifications', (req, res) => safeQuery(req, res, async () => {
   await requireAuth(req, res);
   const { id, userId, message, isRead, timestamp, type, relatedId } = req.body;
-  const canCreate = req.user.id === userId || ['SUPER_ADMIN', 'ADMIN'].includes(req.user.role);
-  if (!canCreate) {
-    const err = new Error('FORBIDDEN');
-    err.status = 403;
-    err.publicMessage = 'امکان ایجاد اعلان برای این کاربر وجود ندارد.';
+
+  const userCheck = await pool.query('SELECT id FROM users WHERE id=$1', [userId]);
+  if (!userCheck.rows[0]) {
+    const err = new Error('VALIDATION_ERROR');
+    err.status = 404;
+    err.publicMessage = 'کاربر اعلان یافت نشد.';
     throw err;
   }
+
   const r = await pool.query(
     'INSERT INTO notifications (id, user_id, message, is_read, timestamp, type, related_id) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *',
     [id, userId, message, isRead, timestamp, type, relatedId]
@@ -666,16 +702,20 @@ app.post('/api/notifications', (req, res) => safeQuery(req, res, async () => {
 
 app.put('/api/notifications/:id/read', (req, res) => safeQuery(req, res, async () => {
   await requireAuth(req, res);
-  const r = await pool.query('UPDATE notifications SET is_read=TRUE WHERE id=$1 RETURNING *', [req.params.id]);
-  if (!r.rows[0]) {
+
+  const existing = await pool.query('SELECT * FROM notifications WHERE id=$1', [req.params.id]);
+  if (!existing.rows[0]) {
     const err = new Error('VALIDATION_ERROR');
     err.status = 404;
     err.publicMessage = 'اعلان مورد نظر یافت نشد.';
     throw err;
   }
-  const updated = toCamel(r.rows[0]);
-  assertSelfOrAdmin(req, updated.userId);
-  res.json(updated);
+
+  const currentNotif = toCamel(existing.rows[0]);
+  assertSelfOrAdmin(req, currentNotif.userId);
+
+  const r = await pool.query('UPDATE notifications SET is_read=TRUE WHERE id=$1 RETURNING *', [req.params.id]);
+  res.json(toCamel(r.rows[0]));
 }));
 
 // Logs
