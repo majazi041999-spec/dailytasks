@@ -252,7 +252,7 @@ const ChatSystem: React.FC<ChatSystemProps> = ({ currentUser, users }) => {
 
                     {selectedUser ? (
                         <>
-                            <div className="p-5 bg-white/65 dark:bg-gray-900/65 backdrop-blur-xl border-b border-white/50 dark:border-white/10 flex items-center justify-between z-10 shadow-sm animate-in fade-in slide-in-from-top-4 duration-500">
+                            <div className="p-5 bg-gradient-to-b from-white/75 to-white/60 dark:from-gray-900/75 dark:to-gray-900/60 backdrop-blur-xl border-b border-white/50 dark:border-white/10 flex items-center justify-between z-10 shadow-sm animate-in fade-in slide-in-from-top-4 duration-500">
                                 <div className="flex items-center gap-4">
                                     <div className="relative cursor-pointer group" onClick={() => setZoomedImage(selectedUser.avatar)}>
                                         <img src={selectedUser.avatar} className="w-12 h-12 rounded-full shadow-md border-2 border-white dark:border-gray-700 group-hover:scale-110 transition-transform duration-300" alt="" />
@@ -300,15 +300,15 @@ const ChatSystem: React.FC<ChatSystemProps> = ({ currentUser, users }) => {
                                     return (
                                         <React.Fragment key={msg.id}>
                                             {shouldShowDateDivider(index) && (
-                                                <div className="flex justify-center py-1 animate-fade-scale">
-                                                    <span className="text-[11px] px-3 py-1.5 rounded-full bg-white/75 dark:bg-gray-800/80 border border-white/70 dark:border-gray-700 text-gray-500 dark:text-gray-300 backdrop-blur-sm shadow-sm">
+                                                <div className="sticky top-2 z-10 flex justify-center py-1 animate-fade-scale">
+                                                    <span className="text-[11px] px-3 py-1.5 rounded-full bg-white/80 dark:bg-gray-800/85 border border-white/80 dark:border-gray-700 text-gray-500 dark:text-gray-300 backdrop-blur-md shadow-sm">
                                                         {formatMessageDay(msg.timestamp)}
                                                     </span>
                                                 </div>
                                             )}
 
                                             <div className={`flex w-full ${isMe ? 'justify-end' : 'justify-start'} group animate-slide-up-fade ${groupedWithPrevious ? 'mt-1' : 'mt-3'}`} style={{ animationDelay: `${Math.min(index * 50, 300)}ms` }}>
-                                                <div className={`relative max-w-[78%] min-w-[140px] shadow-sm transition-all duration-300 flex flex-col p-3 gap-2 ${
+                                                <div className={`relative max-w-[78%] min-w-[140px] shadow-sm transition-all duration-300 flex flex-col p-3 gap-2 backdrop-blur-[1px] ${
                                                     isMe
                                                         ? 'bg-gradient-to-br from-[#34C759] to-[#2FB350] text-white rounded-[22px] rounded-br-[8px] shadow-[0_8px_24px_rgba(52,199,89,0.35)] hover:shadow-[0_12px_30px_rgba(52,199,89,0.45)]'
                                                         : 'bg-[#F2F2F7]/95 dark:bg-gray-700/95 text-gray-800 dark:text-gray-100 rounded-[22px] rounded-bl-[8px] border border-white/80 dark:border-gray-600 hover:shadow-md'
@@ -431,7 +431,7 @@ const ChatSystem: React.FC<ChatSystemProps> = ({ currentUser, users }) => {
                                         </label>
                                     </div>
 
-                                    <div className="flex-1 bg-white/70 dark:bg-gray-800/70 rounded-[1.8rem] p-1 border border-white/70 dark:border-gray-600 flex items-center shadow-[inset_0_2px_8px_rgba(255,255,255,0.45)] focus-within:ring-2 focus-within:ring-sky-400/30 transition-all focus-within:bg-white dark:focus-within:bg-gray-800">
+                                    <div className="flex-1 bg-white/75 dark:bg-gray-800/75 rounded-[1.8rem] p-1 border border-white/80 dark:border-gray-600 flex items-center shadow-[inset_0_2px_10px_rgba(255,255,255,0.55)] focus-within:ring-2 focus-within:ring-sky-400/30 transition-all focus-within:bg-white dark:focus-within:bg-gray-800">
                                         <input
                                             ref={inputRef}
                                             type="text"
