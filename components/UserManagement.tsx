@@ -7,9 +7,10 @@ interface UserManagementProps {
     currentUser: User;
     allUsers: User[];
     onRefreshUsers: () => void;
+    onlineUserIds?: string[];
 }
 
-const UserManagement: React.FC<UserManagementProps> = ({ currentUser, allUsers, onRefreshUsers }) => {
+const UserManagement: React.FC<UserManagementProps> = ({ currentUser, allUsers, onRefreshUsers, onlineUserIds = [] }) => {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingUser, setEditingUser] = useState<User | null>(null);
     const [userForm, setUserForm] = useState({ 
@@ -20,6 +21,7 @@ const UserManagement: React.FC<UserManagementProps> = ({ currentUser, allUsers, 
     });
 
     const canManageAdmins = currentUser.role === 'SUPER_ADMIN';
+    const isOnline = (userId: string) => onlineUserIds.includes(userId);
 
     const openCreateModal = () => {
         setEditingUser(null);
@@ -115,6 +117,7 @@ const UserManagement: React.FC<UserManagementProps> = ({ currentUser, allUsers, 
                             <th className="pb-4 pr-4">کاربر</th>
                             <th className="pb-4">نام کاربری</th>
                             <th className="pb-4">نقش</th>
+                            <th className="pb-4">وضعیت</th>
                             <th className="pb-4">ایجاد شده توسط</th>
                             <th className="pb-4 pl-4 text-left">عملیات</th>
                         </tr>
@@ -140,6 +143,12 @@ const UserManagement: React.FC<UserManagementProps> = ({ currentUser, allUsers, 
                                         'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 border-gray-200 dark:border-gray-600'
                                     }`}>
                                         {user.role === 'SUPER_ADMIN' ? 'مدیر کل' : user.role === 'ADMIN' ? 'مدیر بخش' : 'کارمند'}
+                                    </span>
+                                </td>
+                                <td className="py-4">
+                                    <span className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-bold ${isOnline(user.id) ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300' : 'bg-gray-100 text-gray-500 dark:bg-gray-700 dark:text-gray-300'}`}>
+                                        <span className={`w-2 h-2 rounded-full ${isOnline(user.id) ? 'bg-emerald-500' : 'bg-gray-400'}`}></span>
+                                        {isOnline(user.id) ? 'آنلاین' : 'آفلاین'}
                                     </span>
                                 </td>
                                 <td className="py-4 text-sm text-gray-500 dark:text-gray-400">
