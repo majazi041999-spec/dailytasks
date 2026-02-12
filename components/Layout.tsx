@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect, useRef } from 'react';
-import { LayoutDashboard, Calendar, ClipboardList, History, LogOut, BrainCircuit, MessageSquare, Bell, Upload, Volume2, Users, Settings, Moon, Sun, BellRing, X } from 'lucide-react';
+import { LayoutDashboard, Calendar, ClipboardList, History, LogOut, BrainCircuit, MessageSquare, Bell, Upload, Volume2, Users, Settings, Moon, Sun, BellRing, X, BarChart3 } from 'lucide-react';
 import { User, Notification, Task, CalendarEvent } from '../types';
 import { MockBackend } from '../services/mockBackend';
 
@@ -162,6 +162,7 @@ const Layout: React.FC<LayoutProps> = ({ children, activeTab, onTabChange, curre
         { id: 'calendar', label: 'تقویم', icon: <Calendar size={20} /> },
         { id: 'messages', label: 'پیام‌ها', icon: <MessageSquare size={20} /> },
         { id: 'history', label: 'سوابق', icon: <History size={20} /> },
+        { id: 'analytics', label: 'تحلیل', icon: <BarChart3 size={20} /> },
     ];
 
     if (currentUser.role === 'ADMIN' || currentUser.role === 'SUPER_ADMIN') {
