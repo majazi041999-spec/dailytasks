@@ -15,6 +15,7 @@ import AIAssistant from './components/AIAssistant';
 import { Plus, Search, Filter, X, User as UserIcon, WifiOff, Bell, Volume2, Activity, Trash2, ChevronDown, ChevronUp, Sparkles, Volume1 } from 'lucide-react';
 import JalaliDatePicker from './components/JalaliDatePicker';
 import PaginationControl from './components/PaginationControl';
+import AnalyticsDashboard from './components/AnalyticsDashboard';
 
 // Reliable public sound URL
 const NOTIFICATION_SOUND_URL = 'https://codeskulptor-demos.commondatastorage.googleapis.com/pang/pop.mp3';
@@ -707,7 +708,7 @@ const App: React.FC = () => {
             )}
 
             {/* Daily Quote Section */}
-            {activeTab !== 'messages' && activeTab !== 'history' && <DailyQuote />}
+            {activeTab !== 'messages' && activeTab !== 'history' && activeTab !== 'analytics' && <DailyQuote />}
 
             {/* Content with Transition */}
             <div key={activeTab} className="animate-fade-scale">
@@ -827,6 +828,11 @@ const App: React.FC = () => {
                         </div>
                     );
                 })()}
+
+
+                {activeTab === 'analytics' && (
+                    <AnalyticsDashboard tasks={filteredTasks} users={users} />
+                )}
 
                 {activeTab === 'users' && (currentUser.role === 'ADMIN' || currentUser.role === 'SUPER_ADMIN') && (
                     <UserManagement currentUser={currentUser} allUsers={users} onRefreshUsers={refreshUsers} />
