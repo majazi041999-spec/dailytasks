@@ -164,6 +164,21 @@ const ChatSystem: React.FC<ChatSystemProps> = ({ currentUser, users }) => {
         }
     };
 
+    const formatMessageDay = (timestamp: string) => {
+        return new Date(timestamp).toLocaleDateString('fa-IR', {
+            weekday: 'long',
+            month: 'long',
+            day: 'numeric'
+        });
+    };
+
+    const shouldShowDateDivider = (index: number) => {
+        if (index === 0) return true;
+        const current = new Date(messages[index].timestamp).toDateString();
+        const previous = new Date(messages[index - 1].timestamp).toDateString();
+        return current !== previous;
+    };
+
     return (
         <>
             {/* Image Zoom Modal */}
@@ -262,7 +277,7 @@ const ChatSystem: React.FC<ChatSystemProps> = ({ currentUser, users }) => {
                                 </button>
                             </div>
 
-                            <div className="flex-1 overflow-y-auto p-6 space-y-6 custom-scrollbar z-0">
+                            <div className="flex-1 overflow-y-auto p-6 space-y-4 custom-scrollbar z-0 relative bg-[radial-gradient(circle_at_20%_20%,rgba(59,130,246,0.07),transparent_45%),radial-gradient(circle_at_80%_10%,rgba(16,185,129,0.08),transparent_38%),radial-gradient(circle_at_50%_80%,rgba(139,92,246,0.07),transparent_42%)]">
                                 {messages.length === 0 && (
                                     <div className="flex flex-col items-center justify-center h-full text-gray-400 opacity-60 animate-pop">
                                         <MessageSquare size={48} className="mb-2" />
@@ -272,97 +287,102 @@ const ChatSystem: React.FC<ChatSystemProps> = ({ currentUser, users }) => {
                                 {messages.map((msg, index) => {
                                     const isMe = msg.senderId === currentUser.id;
                                     const isEditing = editingMessageId === msg.id;
+                                    const groupedWithPrevious = index > 0 && messages[index - 1].senderId === msg.senderId;
 
                                     return (
-                                        <div key={msg.id} className={`flex w-full ${isMe ? 'justify-end' : 'justify-start'} group animate-slide-up-fade`} style={{ animationDelay: `${Math.min(index * 50, 300)}ms` }}>
-                                            <div className={`relative max-w-[75%] min-w-[140px] shadow-sm transition-all duration-300 flex flex-col p-3 gap-2
-                                        ${isMe
-                                                ? 'bg-blue-600 dark:bg-blue-600 text-white rounded-[20px] rounded-tr-none shadow-blue-500/20 hover:shadow-blue-500/30'
-                                                : 'bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-100 rounded-[20px] rounded-tl-none border border-gray-100 dark:border-gray-600 hover:shadow-md'}
-                                    `}>
-                                                {/* Telegram-style Tail */}
-                                                <svg className={`absolute top-0 w-4 h-4 ${isMe ? '-right-2 fill-blue-600 dark:fill-blue-600' : '-left-2 fill-white dark:fill-gray-700'} ${!isMe && 'scale-x-[-1]'}`} viewBox="0 0 10 10">
-                                                    <path d="M0 0 L10 0 L0 10 Z" />
-                                                </svg>
-
-                                                {/* CONTENT AREA */}
-                                                <div className="px-1 break-words">
-
-                                                    {/* Attachment Display */}
-                                                    {msg.attachment && (
-                                                        <div className="mb-2 rounded-xl overflow-hidden bg-black/10 dark:bg-black/20">
-                                                            {msg.attachmentType === 'image' ? (
-                                                                <img
-                                                                    src={msg.attachment}
-                                                                    alt="attached"
-                                                                    className="max-w-full h-auto max-h-60 object-contain cursor-pointer hover:opacity-90 transition-opacity"
-                                                                    loading="lazy"
-                                                                    onClick={() => setZoomedImage(msg.attachment!)}
-                                                                />
-                                                            ) : (
-                                                                <a
-                                                                    href={msg.attachment}
-                                                                    download={msg.attachmentName || 'file'}
-                                                                    className={`flex items-center gap-3 p-3 transition-colors ${isMe ? 'bg-blue-500 hover:bg-blue-400' : 'bg-gray-50 dark:bg-gray-600 hover:bg-gray-100 dark:hover:bg-gray-500'}`}
-                                                                >
-                                                                    <div className={`p-2 rounded-lg ${isMe ? 'bg-white/20' : 'bg-blue-100 dark:bg-gray-700'}`}>
-                                                                        <FileText size={24} className={isMe ? 'text-white' : 'text-blue-500 dark:text-blue-400'} />
-                                                                    </div>
-                                                                    <div className="flex-1 min-w-0">
-                                                                        <p className={`text-sm font-bold truncate ${isMe ? 'text-white' : 'text-gray-800 dark:text-white'}`}>{msg.attachmentName || 'فایل ضمیمه'}</p>
-                                                                        <span className={`text-[10px] flex items-center gap-1 ${isMe ? 'text-blue-100' : 'text-blue-500 dark:text-blue-300'}`}>
-                                                                    <Download size={10} /> دانلود
-                                                                </span>
-                                                                    </div>
-                                                                </a>
-                                                            )}
-                                                        </div>
-                                                    )}
-
-                                                    {/* Text Content */}
-                                                    {isEditing ? (
-                                                        <div className="flex flex-col gap-2 animate-in fade-in zoom-in-95">
-                                                    <textarea
-                                                        value={editContent}
-                                                        onChange={(e) => setEditContent(e.target.value)}
-                                                        className="bg-white/20 text-inherit rounded-lg px-2 py-1 outline-none w-full border border-white/30 text-sm resize-none min-h-[60px]"
-                                                        autoFocus
-                                                    />
-                                                            <div className="flex gap-2 justify-end">
-                                                                <button onClick={cancelEdit} className="p-1 hover:bg-white/20 rounded transition-colors"><X size={16}/></button>
-                                                                <button onClick={() => saveEdit(msg)} className="p-1 hover:bg-white/20 rounded transition-colors text-green-300 hover:text-green-100"><Check size={16}/></button>
-                                                            </div>
-                                                        </div>
-                                                    ) : (
-                                                        <p dir="auto" className="text-sm leading-7 whitespace-pre-wrap">{msg.content}</p>
-                                                    )}
+                                        <React.Fragment key={msg.id}>
+                                            {shouldShowDateDivider(index) && (
+                                                <div className="flex justify-center py-1 animate-fade-scale">
+                                                    <span className="text-[11px] px-3 py-1.5 rounded-full bg-white/75 dark:bg-gray-800/80 border border-white/70 dark:border-gray-700 text-gray-500 dark:text-gray-300 backdrop-blur-sm shadow-sm">
+                                                        {formatMessageDay(msg.timestamp)}
+                                                    </span>
                                                 </div>
+                                            )}
 
-                                                {/* FOOTER AREA (Time + Buttons) */}
-                                                <div className={`flex items-center justify-between mt-auto pt-1 ${isMe ? 'border-t border-white/10' : 'border-t border-gray-100 dark:border-gray-600'}`}>
-                                                    <div className="flex items-center gap-1 h-6">
-                                                        {isMe && !isEditing && (
-                                                            <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-all duration-300 transform translate-y-1 group-hover:translate-y-0">
-                                                                <button onClick={() => startEdit(msg)} className="p-1.5 hover:bg-white/20 rounded-md transition-colors text-white/90 hover:text-white flex items-center justify-center" title="ویرایش">
-                                                                    <Edit2 size={12}/>
-                                                                </button>
-                                                                <button onClick={() => handleDelete(msg.id)} className="p-1.5 hover:bg-white/20 text-red-200 hover:text-red-50 rounded-md transition-colors flex items-center justify-center" title="حذف">
-                                                                    <Trash2 size={12}/>
-                                                                </button>
+                                            <div className={`flex w-full ${isMe ? 'justify-end' : 'justify-start'} group animate-slide-up-fade ${groupedWithPrevious ? 'mt-1' : 'mt-3'}`} style={{ animationDelay: `${Math.min(index * 50, 300)}ms` }}>
+                                                <div className={`relative max-w-[78%] min-w-[140px] shadow-sm transition-all duration-300 flex flex-col p-3 gap-2 ${
+                                                    isMe
+                                                        ? 'bg-gradient-to-br from-blue-500 to-blue-600 dark:from-blue-500 dark:to-blue-700 text-white rounded-[20px] rounded-tr-[8px] shadow-blue-500/20 hover:shadow-blue-500/30'
+                                                        : 'bg-white/95 dark:bg-gray-700/95 text-gray-800 dark:text-gray-100 rounded-[20px] rounded-tl-[8px] border border-gray-100 dark:border-gray-600 hover:shadow-md'
+                                                }`}>
+                                                    <svg className={`absolute top-0 w-4 h-4 ${isMe ? '-right-2 fill-blue-600 dark:fill-blue-700' : '-left-2 fill-white dark:fill-gray-700'} ${!isMe && 'scale-x-[-1]'}`} viewBox="0 0 10 10">
+                                                        <path d="M0 0 L10 0 L0 10 Z" />
+                                                    </svg>
+
+                                                    <div className="px-1 break-words">
+                                                        {msg.attachment && (
+                                                            <div className="mb-2 rounded-xl overflow-hidden bg-black/10 dark:bg-black/20">
+                                                                {msg.attachmentType === 'image' ? (
+                                                                    <img
+                                                                        src={msg.attachment}
+                                                                        alt="attached"
+                                                                        className="max-w-full h-auto max-h-60 object-contain cursor-pointer hover:opacity-90 transition-opacity"
+                                                                        loading="lazy"
+                                                                        onClick={() => setZoomedImage(msg.attachment!)}
+                                                                    />
+                                                                ) : (
+                                                                    <a
+                                                                        href={msg.attachment}
+                                                                        download={msg.attachmentName || 'file'}
+                                                                        className={`flex items-center gap-3 p-3 transition-colors ${isMe ? 'bg-blue-500 hover:bg-blue-400' : 'bg-gray-50 dark:bg-gray-600 hover:bg-gray-100 dark:hover:bg-gray-500'}`}
+                                                                    >
+                                                                        <div className={`p-2 rounded-lg ${isMe ? 'bg-white/20' : 'bg-blue-100 dark:bg-gray-700'}`}>
+                                                                            <FileText size={24} className={isMe ? 'text-white' : 'text-blue-500 dark:text-blue-400'} />
+                                                                        </div>
+                                                                        <div className="flex-1 min-w-0">
+                                                                            <p className={`text-sm font-bold truncate ${isMe ? 'text-white' : 'text-gray-800 dark:text-white'}`}>{msg.attachmentName || 'فایل ضمیمه'}</p>
+                                                                            <span className={`text-[10px] flex items-center gap-1 ${isMe ? 'text-blue-100' : 'text-blue-500 dark:text-blue-300'}`}>
+                                                                                <Download size={10} /> دانلود
+                                                                            </span>
+                                                                        </div>
+                                                                    </a>
+                                                                )}
                                                             </div>
+                                                        )}
+
+                                                        {isEditing ? (
+                                                            <div className="flex flex-col gap-2 animate-in fade-in zoom-in-95">
+                                                                <textarea
+                                                                    value={editContent}
+                                                                    onChange={(e) => setEditContent(e.target.value)}
+                                                                    className="bg-white/20 text-inherit rounded-lg px-2 py-1 outline-none w-full border border-white/30 text-sm resize-none min-h-[60px]"
+                                                                    autoFocus
+                                                                />
+                                                                <div className="flex gap-2 justify-end">
+                                                                    <button onClick={cancelEdit} className="p-1 hover:bg-white/20 rounded transition-colors"><X size={16}/></button>
+                                                                    <button onClick={() => saveEdit(msg)} className="p-1 hover:bg-white/20 rounded transition-colors text-green-300 hover:text-green-100"><Check size={16}/></button>
+                                                                </div>
+                                                            </div>
+                                                        ) : (
+                                                            <p dir="auto" className="text-sm leading-7 whitespace-pre-wrap">{msg.content}</p>
                                                         )}
                                                     </div>
 
-                                                    <div className={`flex items-center gap-1 opacity-70 ${isMe ? 'text-blue-100' : 'text-gray-400 dark:text-gray-400'} shrink-0 ml-1`}>
-                                                <span className="text-[10px] font-mono whitespace-nowrap">
-                                                    {new Date(msg.timestamp).toLocaleTimeString('fa-IR', {hour: '2-digit', minute:'2-digit'})}
-                                                </span>
-                                                        {isMe && <Check size={12} className={msg.isRead ? "text-blue-200" : ""} />}
-                                                        {isEditing && <span className="text-[9px]">(ویرایش)</span>}
+                                                    <div className={`flex items-center justify-between mt-auto pt-1 ${isMe ? 'border-t border-white/10' : 'border-t border-gray-100 dark:border-gray-600'}`}>
+                                                        <div className="flex items-center gap-1 h-6">
+                                                            {isMe && !isEditing && (
+                                                                <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-all duration-300 transform translate-y-1 group-hover:translate-y-0">
+                                                                    <button onClick={() => startEdit(msg)} className="p-1.5 hover:bg-white/20 rounded-md transition-colors text-white/90 hover:text-white flex items-center justify-center" title="ویرایش">
+                                                                        <Edit2 size={12}/>
+                                                                    </button>
+                                                                    <button onClick={() => handleDelete(msg.id)} className="p-1.5 hover:bg-white/20 text-red-200 hover:text-red-50 rounded-md transition-colors flex items-center justify-center" title="حذف">
+                                                                        <Trash2 size={12}/>
+                                                                    </button>
+                                                                </div>
+                                                            )}
+                                                        </div>
+
+                                                        <div className={`flex items-center gap-1 opacity-70 ${isMe ? 'text-blue-100' : 'text-gray-400 dark:text-gray-400'} shrink-0 ml-1`}>
+                                                            <span className="text-[10px] font-mono whitespace-nowrap">
+                                                                {new Date(msg.timestamp).toLocaleTimeString('fa-IR', {hour: '2-digit', minute:'2-digit'})}
+                                                            </span>
+                                                            {isMe && <Check size={12} className={msg.isRead ? 'text-blue-200' : ''} />}
+                                                            {isEditing && <span className="text-[9px]">(ویرایش)</span>}
+                                                        </div>
                                                     </div>
                                                 </div>
                                             </div>
-                                        </div>
+                                        </React.Fragment>
                                     )
                                 })}
                                 <div ref={messagesEndRef} />
@@ -403,7 +423,7 @@ const ChatSystem: React.FC<ChatSystemProps> = ({ currentUser, users }) => {
                                         </label>
                                     </div>
 
-                                    <div className="flex-1 bg-white/50 dark:bg-gray-800/50 rounded-3xl p-1 border border-white/40 dark:border-gray-600 flex items-center shadow-inner focus-within:ring-2 focus-within:ring-blue-500/20 transition-all focus-within:bg-white dark:focus-within:bg-gray-800">
+                                    <div className="flex-1 bg-white/60 dark:bg-gray-800/60 rounded-[1.75rem] p-1 border border-white/50 dark:border-gray-600 flex items-center shadow-inner focus-within:ring-2 focus-within:ring-blue-500/20 transition-all focus-within:bg-white dark:focus-within:bg-gray-800">
                                         <input
                                             ref={inputRef}
                                             type="text"
