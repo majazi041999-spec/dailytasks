@@ -38,7 +38,7 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
         <div className="bg-white/60 backdrop-blur-2xl rounded-[2.5rem] shadow-[0_20px_50px_rgba(0,0,0,0.1)] border border-white/50 p-10">
           
           <div className="flex flex-col items-center mb-10">
-            <img src="/taskchi-logo.svg" alt="لوگوی تسکچی" className="w-20 h-20 rounded-3xl shadow-lg shadow-orange-500/20 object-cover mb-4 border border-white/80" />
+            <img src="/taskchi-logo.svg" alt="لوگوی تسکچی" className="w-28 h-28 rounded-[2rem] shadow-xl shadow-blue-500/25 object-cover mb-4 border-2 border-white/80" />
             <h1 className="text-2xl font-black text-gray-900 tracking-tight">ورود به تسکچی</h1>
             <p className="text-gray-500 text-sm mt-2">مدیریت پروژه هوشمند و یکپارچه</p>
           </div>

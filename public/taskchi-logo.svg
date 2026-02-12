@@ -1,83 +1,76 @@
 <svg width="512" height="512" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
   <defs>
-    <linearGradient id="bgNight" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0%" stop-color="#090B35"/>
-      <stop offset="100%" stop-color="#1A1159"/>
+    <style>
+      :root {
+        --bg1: #e9f1ff;
+        --bg2: #c8dcff;
+        --ring: #3f63ff;
+        --card: #ffffff;
+        --ink: #1f2a44;
+        --accent: #3366ff;
+        --accent-2: #5b8cff;
+        --text: #2043c9;
+      }
+      @media (prefers-color-scheme: dark) {
+        :root {
+          --bg1: #10173a;
+          --bg2: #1b2561;
+          --ring: #7aa2ff;
+          --card: #162047;
+          --ink: #d7e4ff;
+          --accent: #74a3ff;
+          --accent-2: #93b8ff;
+          --text: #a8c6ff;
+        }
+      }
+    </style>
+    <linearGradient id="bg" x1="76" y1="76" x2="436" y2="436" gradientUnits="userSpaceOnUse">
+      <stop stop-color="var(--bg1)"/>
+      <stop offset="1" stop-color="var(--bg2)"/>
     </linearGradient>
-    <radialGradient id="glow" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(256 222) rotate(90) scale(220)">
-      <stop offset="0%" stop-color="#7A5BFF" stop-opacity="0.55"/>
-      <stop offset="100%" stop-color="#7A5BFF" stop-opacity="0"/>
-    </radialGradient>
-    <linearGradient id="cardBlue" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0%" stop-color="#7CA5FF"/>
-      <stop offset="100%" stop-color="#68DEFF"/>
-    </linearGradient>
-    <linearGradient id="purpleEdge" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0%" stop-color="#4937CC"/>
-      <stop offset="100%" stop-color="#7E5CFF"/>
-    </linearGradient>
-    <filter id="softShadow" x="-20%" y="-20%" width="140%" height="140%">
-      <feDropShadow dx="0" dy="12" stdDeviation="10" flood-color="#040621" flood-opacity="0.65"/>
+    <filter id="shadow" x="42" y="42" width="428" height="428" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+      <feDropShadow dx="0" dy="10" stdDeviation="10" flood-opacity="0.25"/>
     </filter>
   </defs>
 
-  <rect width="512" height="512" rx="56" fill="url(#bgNight)"/>
-  <ellipse cx="256" cy="240" rx="210" ry="150" fill="url(#glow)"/>
+  <g filter="url(#shadow)">
+    <circle cx="256" cy="220" r="180" fill="url(#bg)"/>
+    <circle cx="256" cy="220" r="172" stroke="var(--ring)" stroke-width="8"/>
 
-  <!-- Outer purple base -->
-  <ellipse cx="256" cy="266" rx="188" ry="120" fill="#1B0D63"/>
-  <ellipse cx="256" cy="266" rx="180" ry="112" fill="#2F1A8A" opacity="0.85"/>
+    <!-- calendar -->
+    <g transform="translate(94 112)">
+      <rect x="0" y="0" width="144" height="118" rx="16" fill="var(--card)" stroke="var(--ring)" stroke-width="6"/>
+      <rect x="0" y="0" width="144" height="30" rx="12" fill="var(--accent)"/>
+      <path d="M20 46H124M20 70H124M20 94H124M48 32V106M78 32V106" stroke="var(--accent-2)" stroke-width="3" opacity="0.8"/>
+      <path d="M30 80L39 90L55 73" stroke="var(--accent)" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/>
+    </g>
 
-  <!-- Calendar block -->
-  <g transform="translate(64 112) rotate(-9)" filter="url(#softShadow)">
-    <rect x="0" y="0" width="168" height="146" rx="18" fill="#DCE6FF" stroke="#2A1C88" stroke-width="8"/>
-    <rect x="0" y="0" width="168" height="36" rx="16" fill="url(#purpleEdge)"/>
-    <circle cx="36" cy="8" r="10" fill="#140C56"/>
-    <circle cx="84" cy="8" r="10" fill="#140C56"/>
-    <circle cx="132" cy="8" r="10" fill="#140C56"/>
-    <path d="M18 62H150M18 90H150M18 118H150M56 38V140M95 38V140" stroke="#5D72D8" stroke-width="3" opacity="0.65"/>
-    <path d="M30 76L40 86L59 64" stroke="#3B67F6" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/>
-    <path d="M104 106L111 114L127 97" stroke="#6E8CFF" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/>
-  </g>
+    <!-- clock -->
+    <g transform="translate(312 124)">
+      <circle cx="58" cy="58" r="54" fill="var(--card)" stroke="var(--ring)" stroke-width="8"/>
+      <circle cx="58" cy="58" r="5" fill="var(--accent)"/>
+      <path d="M58 58L58 34M58 58L76 58M58 58L42 47" stroke="var(--accent)" stroke-width="6" stroke-linecap="round"/>
+    </g>
 
-  <!-- Clock block -->
-  <g transform="translate(324 122)" filter="url(#softShadow)">
-    <circle cx="76" cy="76" r="74" fill="#27117E" stroke="#120A4D" stroke-width="10"/>
-    <circle cx="76" cy="76" r="58" fill="#3D2BA8"/>
-    <circle cx="76" cy="76" r="8" fill="#8FD8FF"/>
-    <path d="M76 76L76 43" stroke="#8FD8FF" stroke-width="7" stroke-linecap="round"/>
-    <path d="M76 76L49 58" stroke="#8FD8FF" stroke-width="7" stroke-linecap="round"/>
-    <path d="M76 76L107 76" stroke="#8FD8FF" stroke-width="6" stroke-linecap="round"/>
-  </g>
+    <!-- main checklist card -->
+    <g transform="translate(176 146) rotate(6)">
+      <rect x="0" y="0" width="166" height="210" rx="18" fill="var(--card)" stroke="var(--ring)" stroke-width="8"/>
+      <rect x="52" y="-10" width="62" height="20" rx="8" fill="var(--ring)"/>
+      <g transform="translate(22 46)">
+        <rect x="0" y="0" width="22" height="22" rx="5" fill="var(--accent)"/>
+        <path d="M5 12L10 17L18 7" stroke="white" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/>
+        <path d="M34 12H118" stroke="var(--ink)" stroke-width="5" stroke-linecap="round"/>
 
-  <!-- Character + checklist -->
-  <g transform="translate(168 120)" filter="url(#softShadow)">
-    <path d="M86 184C48 184 18 154 18 116V98C18 60 48 30 86 30C124 30 154 60 154 98V116C154 154 124 184 86 184Z" fill="#0D103A"/>
-    <circle cx="86" cy="72" r="29" fill="#5E7ED6"/>
-    <path d="M66 69C72 78 84 82 97 70" stroke="#0D103A" stroke-width="4" stroke-linecap="round"/>
+        <rect x="0" y="46" width="22" height="22" rx="5" fill="var(--accent)"/>
+        <path d="M5 58L10 63L18 53" stroke="white" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/>
+        <path d="M34 58H118" stroke="var(--ink)" stroke-width="5" stroke-linecap="round"/>
 
-    <rect x="122" y="90" width="128" height="156" rx="14" fill="#DCE6FF" stroke="#1A2E8E" stroke-width="8" transform="rotate(8 122 90)"/>
-    <g transform="translate(141 121) rotate(8)">
-      <rect x="0" y="0" width="18" height="18" rx="4" fill="url(#cardBlue)"/>
-      <path d="M4 10L8 14L14 6" stroke="#163AB8" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/>
-      <path d="M28 10H79" stroke="#13236F" stroke-width="4" stroke-linecap="round"/>
-
-      <rect x="0" y="36" width="18" height="18" rx="4" fill="url(#cardBlue)"/>
-      <path d="M4 46L8 50L14 42" stroke="#163AB8" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/>
-      <path d="M28 46H79" stroke="#13236F" stroke-width="4" stroke-linecap="round"/>
-
-      <rect x="0" y="72" width="18" height="18" rx="4" fill="url(#cardBlue)"/>
-      <path d="M4 82L8 86L14 78" stroke="#163AB8" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/>
-      <path d="M28 82H79" stroke="#13236F" stroke-width="4" stroke-linecap="round"/>
+        <rect x="0" y="92" width="22" height="22" rx="5" fill="var(--accent)"/>
+        <path d="M5 104L10 109L18 99" stroke="white" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/>
+        <path d="M34 104H118" stroke="var(--ink)" stroke-width="5" stroke-linecap="round"/>
+      </g>
     </g>
   </g>
 
-  <!-- Stars -->
-  <g fill="#7DD7FF" opacity="0.95">
-    <path d="M141 281L147 295L161 301L147 307L141 321L135 307L121 301L135 295Z"/>
-    <path d="M360 294L365 305L376 310L365 315L360 326L355 315L344 310L355 305Z"/>
-    <path d="M208 95L212 104L221 108L212 112L208 121L204 112L195 108L204 104Z"/>
-  </g>
-
-  <text x="256" y="458" text-anchor="middle" fill="#79B7FF" font-size="94" font-family="Vazirmatn, Tahoma, sans-serif" font-weight="800">تسکچی</text>
+  <text x="256" y="460" text-anchor="middle" fill="var(--text)" font-size="84" font-family="Vazirmatn, Tahoma, sans-serif" font-weight="800">تسکچی</text>
 </svg>
