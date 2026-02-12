@@ -368,6 +368,23 @@ const ChatSystem: React.FC<ChatSystemProps> = ({ currentUser, users }) => {
                                                         ) : (
                                                             <p dir="auto" className="text-sm leading-7 whitespace-pre-wrap">{msg.content}</p>
                                                         )}
+
+                                                        {isEditing ? (
+                                                            <div className="flex flex-col gap-2 animate-in fade-in zoom-in-95">
+                                                                <textarea
+                                                                    value={editContent}
+                                                                    onChange={(e) => setEditContent(e.target.value)}
+                                                                    className="bg-white/20 text-inherit rounded-lg px-2 py-1 outline-none w-full border border-white/30 text-sm resize-none min-h-[60px]"
+                                                                    autoFocus
+                                                                />
+                                                                <div className="flex gap-2 justify-end">
+                                                                    <button onClick={cancelEdit} className="p-1 hover:bg-white/20 rounded transition-colors"><X size={16}/></button>
+                                                                    <button onClick={() => saveEdit(msg)} className="p-1 hover:bg-white/20 rounded transition-colors text-green-300 hover:text-green-100"><Check size={16}/></button>
+                                                                </div>
+                                                            </div>
+                                                        ) : (
+                                                            <p dir="auto" className="text-sm leading-7 whitespace-pre-wrap">{msg.content}</p>
+                                                        )}
                                                     </div>
 
                                                     <div className={`flex items-center justify-between mt-auto pt-1 ${isMe ? 'border-t border-white/10' : 'border-t border-gray-100 dark:border-gray-600'}`}>
