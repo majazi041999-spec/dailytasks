@@ -2,7 +2,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { User, Message } from '../types';
 import { MockBackend, generateUUID } from '../services/mockBackend';
-import { Send, User as UserIcon, MessageSquare, Edit2, Trash2, X, Check, Search, Trash, Image as ImageIcon, Paperclip, FileText, Download } from 'lucide-react';
+import { Send, User as UserIcon, MessageSquare, Edit2, Trash2, X, Check, Search, Trash, Image as ImageIcon, Paperclip, FileText, Download, Phone, Video, Mic } from 'lucide-react';
 
 interface ChatSystemProps {
     currentUser: User;
