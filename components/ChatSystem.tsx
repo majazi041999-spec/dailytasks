@@ -46,7 +46,24 @@ const ChatSystem: React.FC<ChatSystemProps> = ({ currentUser, users }) => {
                         (m.senderId === currentUser.id && m.receiverId === selectedUser.id) ||
                         (m.senderId === selectedUser.id && m.receiverId === currentUser.id)
                     ).sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());
-                    setMessages(conversation);
+
+                    // Mark incoming unread messages as read for real read receipts
+                    const unreadIncoming = conversation.filter(m =>
+                        m.senderId === selectedUser.id &&
+                        m.receiverId === currentUser.id &&
+                        !m.isRead
+                    );
+
+                    if (unreadIncoming.length > 0) {
+                        await Promise.all(
+                            unreadIncoming.map(m => MockBackend.updateMessage({ ...m, isRead: true }))
+                        );
+                        setMessages(conversation.map(m =>
+                            unreadIncoming.some(u => u.id === m.id) ? { ...m, isRead: true } : m
+                        ));
+                    } else {
+                        setMessages(conversation);
+                    }
                 } catch (e) {
                     console.error("Error polling messages:", e);
                 }
@@ -268,15 +285,6 @@ const ChatSystem: React.FC<ChatSystemProps> = ({ currentUser, users }) => {
                                 </div>
 
                                 <div className="flex items-center gap-2">
-                                    <button className="p-2.5 rounded-xl bg-white/70 dark:bg-gray-800/70 border border-white/60 dark:border-gray-700 text-sky-500 hover:scale-105 transition-all" title="تماس صوتی">
-                                        <Phone size={16} />
-                                    </button>
-                                    <button className="p-2.5 rounded-xl bg-white/70 dark:bg-gray-800/70 border border-white/60 dark:border-gray-700 text-indigo-500 hover:scale-105 transition-all" title="تماس تصویری">
-                                        <Video size={16} />
-                                    </button>
-                                    <button className="p-2.5 rounded-xl bg-white/70 dark:bg-gray-800/70 border border-white/60 dark:border-gray-700 text-emerald-500 hover:scale-105 transition-all" title="ویس">
-                                        <Mic size={16} />
-                                    </button>
                                     <button
                                         onClick={handleDeleteConversation}
                                         className="bg-red-50/90 dark:bg-red-900/20 text-red-500 p-3 rounded-xl hover:bg-red-500 hover:text-white transition-all shadow-sm flex items-center gap-2 text-xs font-bold hover:scale-105 active:scale-95"
@@ -368,23 +376,6 @@ const ChatSystem: React.FC<ChatSystemProps> = ({ currentUser, users }) => {
                                                         ) : (
                                                             <p dir="auto" className="text-sm leading-7 whitespace-pre-wrap">{msg.content}</p>
                                                         )}
-
-                                                        {isEditing ? (
-                                                            <div className="flex flex-col gap-2 animate-in fade-in zoom-in-95">
-                                                                <textarea
-                                                                    value={editContent}
-                                                                    onChange={(e) => setEditContent(e.target.value)}
-                                                                    className="bg-white/20 text-inherit rounded-lg px-2 py-1 outline-none w-full border border-white/30 text-sm resize-none min-h-[60px]"
-                                                                    autoFocus
-                                                                />
-                                                                <div className="flex gap-2 justify-end">
-                                                                    <button onClick={cancelEdit} className="p-1 hover:bg-white/20 rounded transition-colors"><X size={16}/></button>
-                                                                    <button onClick={() => saveEdit(msg)} className="p-1 hover:bg-white/20 rounded transition-colors text-green-300 hover:text-green-100"><Check size={16}/></button>
-                                                                </div>
-                                                            </div>
-                                                        ) : (
-                                                            <p dir="auto" className="text-sm leading-7 whitespace-pre-wrap">{msg.content}</p>
-                                                        )}
                                                     </div>
 
                                                     <div className={`flex items-center justify-between mt-auto pt-1 ${isMe ? 'border-t border-white/10' : 'border-t border-gray-100 dark:border-gray-600'}`}>
@@ -405,7 +396,15 @@ const ChatSystem: React.FC<ChatSystemProps> = ({ currentUser, users }) => {
                                                             <span className="text-[10px] font-mono whitespace-nowrap">
                                                                 {new Date(msg.timestamp).toLocaleTimeString('fa-IR', {hour: '2-digit', minute:'2-digit'})}
                                                             </span>
-                                                            {isMe && <Check size={12} className={msg.isRead ? 'text-blue-200' : ''} />}
+                                                            {isMe && (
+                                                                <span className="flex items-center gap-1">
+                                                                    <span className="relative flex items-center w-4 h-3">
+                                                                        <Check size={11} className={`absolute ${msg.isRead ? 'text-blue-200' : 'text-emerald-200/90'} left-0`} />
+                                                                        {msg.isRead && <Check size={11} className="absolute text-blue-200 left-[5px]" />}
+                                                                    </span>
+                                                                    {msg.isRead && <span className="text-[9px]">خوانده شد</span>}
+                                                                </span>
+                                                            )}
                                                             {isEditing && <span className="text-[9px]">(ویرایش)</span>}
                                                         </div>
                                                     </div>
