@@ -10,6 +10,8 @@ const API_URL = apiBaseFromEnv || `http://${hostname}:3001/api`;
 const TOKEN_KEY = 'modiriat_token_v3';
 const USER_KEY = 'modiriat_user_v3';
 
+let presenceEndpointAvailable: boolean | null = null;
+
 // Retry logic for 503 (Initializing) and Network Errors (Crash/Restart)
 const fetchJson = async (url: string, options?: RequestInit, retries = 100, backoff = 1000): Promise<any> => {
     try {
@@ -60,7 +62,8 @@ const fetchJson = async (url: string, options?: RequestInit, retries = 100, back
             return fetchJson(url, options, retries - 1, backoff);
         }
 
-        if (err.message !== "UNAUTHORIZED" && err.message !== "SERVICE_UNAVAILABLE") {
+        const isPresence404 = url === '/presence' && String(err?.message || '').includes('404');
+        if (err.message !== "UNAUTHORIZED" && err.message !== "SERVICE_UNAVAILABLE" && !isPresence404) {
             console.error(`Fetch Error [${url}]:`, err);
         }
         throw err;
@@ -148,12 +151,18 @@ export const MockBackend = {
     },
 
     getOnlineUserIds: async (): Promise<string[]> => {
+        // Backward compatibility: if backend doesn't expose /api/presence, stop retrying this call.
+        if (presenceEndpointAvailable === false) {
+            return [];
+        }
+
         try {
             const response = await fetchJson('/presence');
+            presenceEndpointAvailable = true;
             return response?.onlineUserIds || [];
         } catch (e: any) {
-            // Backward compatibility: older backend versions may not expose /api/presence yet.
             if (e?.message?.includes('404')) {
+                presenceEndpointAvailable = false;
                 return [];
             }
             throw e;
