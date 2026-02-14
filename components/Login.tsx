@@ -58,7 +58,7 @@ const Login: React.FC<LoginProps> = ({ onLogin, isDarkMode, toggleTheme }) => {
               فضای کاری یکپارچه برای مدیریت تسک‌ها، پیام‌ها، گزارش عملکرد و هماهنگی تیمی در لحظه.
             </p>
 
-            <div className="bg-white/10 rounded-2xl p-5 border border-white/20">
+            <div className="bg-white/10 rounded-2xl p-5 border border-white/20 login-hero-card">
               <svg viewBox="0 0 360 200" className="w-full h-40">
                 <defs>
                   <linearGradient id="cardGrad" x1="0" y1="0" x2="1" y2="1">
@@ -103,8 +103,8 @@ const Login: React.FC<LoginProps> = ({ onLogin, isDarkMode, toggleTheme }) => {
           <form onSubmit={handleSubmit} className="space-y-5">
             <div>
               <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-2 mr-1">نام کاربری</label>
-              <div className="relative">
-                <UserIcon className="absolute right-4 top-4 text-slate-400" size={20} />
+              <div className="login-input-wrap">
+                <UserIcon className="login-input-icon absolute right-4 top-4 text-slate-400" size={20} />
                 <input
                   type="text"
                   value={username}
@@ -117,8 +117,8 @@ const Login: React.FC<LoginProps> = ({ onLogin, isDarkMode, toggleTheme }) => {
 
             <div>
               <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-2 mr-1">رمز عبور</label>
-              <div className="relative">
-                <Lock className="absolute right-4 top-4 text-slate-400" size={20} />
+              <div className="login-input-wrap">
+                <Lock className="login-input-icon absolute right-4 top-4 text-slate-400" size={20} />
                 <input
                   type="password"
                   value={password}
@@ -138,7 +138,7 @@ const Login: React.FC<LoginProps> = ({ onLogin, isDarkMode, toggleTheme }) => {
             <button
               type="submit"
               disabled={loading}
-              className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-bold py-4 rounded-2xl shadow-xl shadow-blue-900/20 flex items-center justify-center gap-2 transition-all transform hover:scale-[1.02] active:scale-95 disabled:opacity-70 disabled:cursor-not-allowed"
+              className="login-submit-btn w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-bold py-4 rounded-2xl shadow-xl shadow-blue-900/20 flex items-center justify-center gap-2 transition-all transform hover:scale-[1.02] active:scale-95 disabled:opacity-70 disabled:cursor-not-allowed"
             >
               {loading ? 'در حال بررسی...' : (
                 <>
