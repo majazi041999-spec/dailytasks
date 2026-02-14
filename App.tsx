@@ -2,7 +2,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import Layout from './components/Layout';
 import Login from './components/Login';
-import { MockBackend } from './services/mockBackend';
+import { MockBackend, getRealtimeSocketUrl } from './services/mockBackend';
 import { Task, User, TaskStatus, ActionLog, Priority, Notification } from './types';
 import TaskCard from './components/TaskCard';
 import TaskModal from './components/TaskModal';
@@ -15,6 +15,7 @@ import AIAssistant from './components/AIAssistant';
 import { Plus, Search, Filter, X, User as UserIcon, WifiOff, Bell, Volume2, Activity, Trash2, ChevronDown, ChevronUp, Sparkles, Volume1 } from 'lucide-react';
 import JalaliDatePicker from './components/JalaliDatePicker';
 import PaginationControl from './components/PaginationControl';
+import AnalyticsDashboard from './components/AnalyticsDashboard';
 
 // Reliable public sound URL
 const NOTIFICATION_SOUND_URL = 'https://codeskulptor-demos.commondatastorage.googleapis.com/pang/pop.mp3';
@@ -38,6 +39,7 @@ const App: React.FC = () => {
     const [logs, setLogs] = useState<ActionLog[]>([]);
     const [notifications, setNotifications] = useState<Notification[]>([]);
     const [unreadNotifCount, setUnreadNotifCount] = useState(0);
+    const [onlineUserIds, setOnlineUserIds] = useState<string[]>([]);
     const [showNotifPanel, setShowNotifPanel] = useState(false);
 
     // History Expansion State
@@ -77,6 +79,9 @@ const App: React.FC = () => {
     const lastNotifIdRef = useRef<string | null>(null);
     const isFirstLoadRef = useRef(true);
     const audioRef = useRef<HTMLAudioElement | null>(null);
+    const appSocketRef = useRef<WebSocket | null>(null);
+    const reconnectAppSocketRef = useRef<number | null>(null);
+    const activeTabRef = useRef(activeTab);
 
     const [toastData, setToastData] = useState<Notification | null>(null);
     const [isToastVisible, setIsToastVisible] = useState(false);
@@ -151,6 +156,10 @@ const App: React.FC = () => {
         setShowFilters(false);
     }, [activeTab]);
 
+    useEffect(() => {
+        activeTabRef.current = activeTab;
+    }, [activeTab]);
+
     // --- BACKGROUND SESSION CHECK ---
     useEffect(() => {
         const token = localStorage.getItem('modiriat_token_v3');
@@ -185,70 +194,144 @@ const App: React.FC = () => {
     // Initial Data Load
     useEffect(() => {
         const init = async () => {
+            if (!isAuthenticated || !currentUser) {
+                setIsLoading(false);
+                return;
+            }
+
             setIsLoading(true);
             setConnectionError(false);
             try {
                 const fetchedUsers = await MockBackend.getAllUsers();
                 setUsers(fetchedUsers);
-                if (currentUser) {
-                    await loadUserData(currentUser.id);
-                }
-            } catch (error) {
+                await loadUserData(currentUser.id);
+            } catch (error: any) {
                 console.error("Failed to fetch initial data:", error);
+                if (error?.message === 'UNAUTHORIZED') {
+                    handleLogout();
+                    return;
+                }
                 setConnectionError(true);
             } finally {
                 setIsLoading(false);
             }
         }
         init();
-    }, [currentUser?.id]);
+    }, [currentUser?.id, isAuthenticated]);
 
-    // --- REAL-TIME POLLING LOOP (EVERY 2 SECONDS) ---
+    // --- REAL-TIME SYNC LOOP (WEBSOCKET + ON-DEMAND FETCH) ---
     useEffect(() => {
         if (!currentUser) return;
+        let shouldReconnect = true;
 
-        const pollData = async () => {
-            try {
-                // 1. Fetch Notifications
-                const notifs = await MockBackend.getNotifications(currentUser.id);
-                const sortedNotifs = notifs.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+        const syncNotifications = async () => {
+            const notifs = await MockBackend.getNotifications(currentUser.id);
+            const sortedNotifs = notifs.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
 
-                if (sortedNotifs.length > 0) {
-                    const newest = sortedNotifs[0];
-                    if (newest.id !== lastNotifIdRef.current) {
-                        if (!isFirstLoadRef.current && !newest.isRead) {
-                            triggerNotification(newest);
-                        }
-                        lastNotifIdRef.current = newest.id;
+            if (sortedNotifs.length > 0) {
+                const newest = sortedNotifs[0];
+                if (newest.id !== lastNotifIdRef.current) {
+                    if (!isFirstLoadRef.current && !newest.isRead) {
+                        triggerNotification(newest);
                     }
+                    lastNotifIdRef.current = newest.id;
                 }
-                isFirstLoadRef.current = false;
-                setNotifications(sortedNotifs);
-                setUnreadNotifCount(sortedNotifs.filter(n => !n.isRead).length);
+            }
+            isFirstLoadRef.current = false;
+            setNotifications(sortedNotifs);
+            setUnreadNotifCount(sortedNotifs.filter(n => !n.isRead).length);
+        };
 
-                // 2. Fetch Tasks
-                const fetchedTasks = await MockBackend.getTasks();
-                setTasks(fetchedTasks);
-
-                // 3. Fetch Users (To ensure names/avatars/roles are up to date in Chat)
-                const fetchedUsers = await MockBackend.getAllUsers();
-                setUsers(fetchedUsers);
-
-                // 4. Fetch Logs (If on History tab)
+        const initialSync = async () => {
+            try {
+                await syncNotifications();
+                setTasks(await MockBackend.getTasks());
+                setUsers(await MockBackend.getAllUsers());
+                setOnlineUserIds(await MockBackend.getOnlineUserIds());
                 if (activeTab === 'history') {
-                    const fetchedLogs = await MockBackend.getLogs();
-                    setLogs(fetchedLogs);
+                    setLogs(await MockBackend.getLogs());
                 }
-
             } catch (e) {
                 // Silent fail
             }
         };
 
-        pollData();
-        const interval = setInterval(pollData, 2000);
-        return () => clearInterval(interval);
-    }, [currentUser, activeTab, editingTask]);
+        const connectAppSocket = () => {
+            try {
+                const ws = new WebSocket(getRealtimeSocketUrl());
+                appSocketRef.current = ws;
+
+                ws.onmessage = async (event) => {
+                    try {
+                        const { event: eventName, payload } = JSON.parse(event.data);
+
+                        if (eventName === 'notification:new' || eventName === 'notification:updated') {
+                            const notificationUserId = payload?.userId;
+                            if (!notificationUserId || notificationUserId === currentUser.id) {
+                                await syncNotifications();
+                            }
+                        }
+
+                        if (eventName === 'users:changed') {
+                            setUsers(await MockBackend.getAllUsers());
+                        }
+
+                        if (eventName === 'presence:changed') {
+                            const changedUserId = payload?.userId;
+                            const isOnline = payload?.isOnline;
+                            if (changedUserId) {
+                                setOnlineUserIds(prev => {
+                                    if (isOnline) {
+                                        return prev.includes(changedUserId) ? prev : [...prev, changedUserId];
+                                    }
+                                    return prev.filter(id => id !== changedUserId);
+                                });
+                            }
+                        }
+
+                        if (eventName === 'tasks:changed') {
+                            setTasks(await MockBackend.getTasks());
+                        }
+
+                        if (eventName === 'logs:changed' && activeTabRef.current === 'history') {
+                            setLogs(await MockBackend.getLogs());
+                        }
+                    } catch (err) {
+                        console.error('App socket event parse error:', err);
+                    }
+                };
+
+                ws.onclose = () => {
+                    if (!shouldReconnect) return;
+                    if (reconnectAppSocketRef.current) window.clearTimeout(reconnectAppSocketRef.current);
+                    reconnectAppSocketRef.current = window.setTimeout(connectAppSocket, 1500);
+                };
+            } catch (e) {
+                if (reconnectAppSocketRef.current) window.clearTimeout(reconnectAppSocketRef.current);
+                reconnectAppSocketRef.current = window.setTimeout(connectAppSocket, 1500);
+            }
+        };
+
+        initialSync();
+        connectAppSocket();
+
+        return () => {
+            shouldReconnect = false;
+            if (reconnectAppSocketRef.current) window.clearTimeout(reconnectAppSocketRef.current);
+            reconnectAppSocketRef.current = null;
+            if (appSocketRef.current) {
+                const ws = appSocketRef.current;
+                ws.onclose = null;
+                if (ws.readyState === WebSocket.OPEN) {
+                    ws.close();
+                } else if (ws.readyState === WebSocket.CONNECTING) {
+                    ws.onopen = () => ws.close();
+                    ws.onerror = () => {};
+                }
+                appSocketRef.current = null;
+            }
+        };
+    }, [currentUser]);
 
     const safePlaySound = () => {
         if (audioRef.current) {
@@ -417,7 +500,7 @@ const App: React.FC = () => {
         );
     }
 
-    if (connectionError && !currentUser) {
+    if (connectionError && !currentUser && isAuthenticated) {
         return (
             <div className="min-h-screen flex flex-col items-center justify-center bg-[#f3f4f6] dark:bg-[#0f172a] gap-6 text-center px-4">
                 <div className="bg-red-50 dark:bg-red-900/20 p-6 rounded-full text-red-500">
@@ -431,7 +514,7 @@ const App: React.FC = () => {
     }
 
     if (!isAuthenticated) {
-        return <Login onLogin={handleLogin} />;
+        return <Login onLogin={handleLogin} isDarkMode={isDarkMode} toggleTheme={toggleTheme} />;
     }
 
     if (!currentUser) {
@@ -661,7 +744,7 @@ const App: React.FC = () => {
             )}
 
             {/* Daily Quote Section */}
-            {activeTab !== 'messages' && activeTab !== 'history' && <DailyQuote />}
+            {activeTab !== 'messages' && activeTab !== 'history' && activeTab !== 'analytics' && <DailyQuote />}
 
             {/* Content with Transition */}
             <div key={activeTab} className="animate-fade-scale">
@@ -737,7 +820,7 @@ const App: React.FC = () => {
                 )}
 
                 {activeTab === 'messages' && (
-                    <ChatSystem currentUser={currentUser} users={users} />
+                    <ChatSystem currentUser={currentUser} users={users} onlineUserIds={onlineUserIds} />
                 )}
 
                 {activeTab === 'list' && (() => {
@@ -782,8 +865,13 @@ const App: React.FC = () => {
                     );
                 })()}
 
+
+                {activeTab === 'analytics' && (
+                    <AnalyticsDashboard tasks={filteredTasks} users={users} />
+                )}
+
                 {activeTab === 'users' && (currentUser.role === 'ADMIN' || currentUser.role === 'SUPER_ADMIN') && (
-                    <UserManagement currentUser={currentUser} allUsers={users} onRefreshUsers={refreshUsers} />
+                    <UserManagement currentUser={currentUser} allUsers={users} onRefreshUsers={refreshUsers} onlineUserIds={onlineUserIds} />
                 )}
 
                 {activeTab === 'settings' && (
