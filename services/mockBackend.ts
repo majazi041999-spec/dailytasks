@@ -1,13 +1,16 @@
 
 import { Task, TaskStatus, Priority, User, ActionLog, Message, CalendarEvent, Notification, UserRole } from '../types';
 
-// Use window.location.hostname to allow access from other devices on the network
-// Fallback to 'localhost' if hostname is missing (e.g. unexpected environment)
+const apiBaseFromEnv = import.meta.env.VITE_API_BASE_URL as string | undefined;
+
+// Fallback to current hostname for easy LAN testing in local environments
 const hostname = window.location.hostname || 'localhost';
-const API_URL = `http://${hostname}:3001/api`;
+const API_URL = apiBaseFromEnv || `http://${hostname}:3001/api`;
 
 const TOKEN_KEY = 'modiriat_token_v3';
 const USER_KEY = 'modiriat_user_v3';
+
+let presenceEndpointAvailable: boolean | null = null;
 
 // Retry logic for 503 (Initializing) and Network Errors (Crash/Restart)
 const fetchJson = async (url: string, options?: RequestInit, retries = 100, backoff = 1000): Promise<any> => {
@@ -59,12 +62,22 @@ const fetchJson = async (url: string, options?: RequestInit, retries = 100, back
             return fetchJson(url, options, retries - 1, backoff);
         }
 
-        if (err.message !== "UNAUTHORIZED" && err.message !== "SERVICE_UNAVAILABLE") {
+        const isPresence404 = url === '/presence' && String(err?.message || '').includes('404');
+        if (err.message !== "UNAUTHORIZED" && err.message !== "SERVICE_UNAVAILABLE" && !isPresence404) {
             console.error(`Fetch Error [${url}]:`, err);
         }
         throw err;
     }
 };
+
+
+export const getRealtimeSocketUrl = (): string => {
+    const wsBase = API_URL.replace(/^http/i, 'ws').replace(/\/api$/, '');
+    const token = localStorage.getItem(TOKEN_KEY) || '';
+    return `${wsBase}/ws?token=${encodeURIComponent(token)}`;
+};
+
+export const getAuthToken = (): string | null => localStorage.getItem(TOKEN_KEY);
 
 export const generateUUID = () => {
     if (typeof crypto !== 'undefined' && crypto.randomUUID) {
@@ -135,6 +148,25 @@ export const MockBackend = {
     // --- USERS ---
     getAllUsers: async (): Promise<User[]> => {
         return fetchJson('/users');
+    },
+
+    getOnlineUserIds: async (): Promise<string[]> => {
+        // Backward compatibility: if backend doesn't expose /api/presence, stop retrying this call.
+        if (presenceEndpointAvailable === false) {
+            return [];
+        }
+
+        try {
+            const response = await fetchJson('/presence');
+            presenceEndpointAvailable = true;
+            return response?.onlineUserIds || [];
+        } catch (e: any) {
+            if (e?.message?.includes('404')) {
+                presenceEndpointAvailable = false;
+                return [];
+            }
+            throw e;
+        }
     },
 
     saveUser: async (user: any): Promise<User> => {
