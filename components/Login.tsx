@@ -44,18 +44,44 @@ const Login: React.FC<LoginProps> = ({ onLogin, isDarkMode, toggleTheme }) => {
       </button>
 
       <div className="relative z-10 w-full max-w-5xl grid grid-cols-1 lg:grid-cols-2 gap-6 items-stretch">
-        <div className="hidden lg:flex flex-col justify-between bg-gradient-to-br from-blue-600 to-indigo-700 text-white rounded-[2.5rem] p-10 shadow-2xl shadow-blue-900/30">
-          <div>
+        <div className="hidden lg:flex flex-col justify-between bg-gradient-to-br from-blue-600 to-indigo-700 text-white rounded-[2.5rem] p-10 shadow-2xl shadow-blue-900/30 overflow-hidden relative">
+          <div className="absolute -top-8 -right-8 w-40 h-40 bg-white/15 rounded-full blur-2xl" />
+          <div className="absolute -bottom-10 -left-10 w-44 h-44 bg-indigo-300/20 rounded-full blur-2xl" />
+
+          <div className="relative z-10">
             <div className="inline-flex items-center gap-2 bg-white/20 px-4 py-2 rounded-full text-xs font-bold mb-8">
               <Sparkles size={14} />
               نسخه حرفه‌ای مدیریت کار تیم
             </div>
             <h2 className="text-4xl font-black leading-tight mb-4">ورود به تسکچی</h2>
-            <p className="text-blue-100 text-sm leading-7">
+            <p className="text-blue-100 text-sm leading-7 mb-8">
               فضای کاری یکپارچه برای مدیریت تسک‌ها، پیام‌ها، گزارش عملکرد و هماهنگی تیمی در لحظه.
             </p>
+
+            <div className="bg-white/10 rounded-2xl p-5 border border-white/20">
+              <svg viewBox="0 0 360 200" className="w-full h-40">
+                <defs>
+                  <linearGradient id="cardGrad" x1="0" y1="0" x2="1" y2="1">
+                    <stop offset="0%" stopColor="#ffffff" stopOpacity="0.25" />
+                    <stop offset="100%" stopColor="#ffffff" stopOpacity="0.08" />
+                  </linearGradient>
+                </defs>
+                <rect x="8" y="12" width="344" height="176" rx="18" fill="url(#cardGrad)" stroke="rgba(255,255,255,.25)" />
+                <rect x="24" y="30" width="96" height="60" rx="12" fill="rgba(255,255,255,.18)" />
+                <path d="M34 62L48 74L74 48" stroke="#c7f0ff" strokeWidth="8" strokeLinecap="round" strokeLinejoin="round"/>
+                <rect x="136" y="30" width="200" height="12" rx="6" fill="rgba(255,255,255,.28)"/>
+                <rect x="136" y="52" width="168" height="10" rx="5" fill="rgba(255,255,255,.18)"/>
+                <rect x="136" y="70" width="184" height="10" rx="5" fill="rgba(255,255,255,.18)"/>
+
+                <rect x="24" y="110" width="312" height="14" rx="7" fill="rgba(255,255,255,.16)"/>
+                <rect x="24" y="136" width="272" height="14" rx="7" fill="rgba(255,255,255,.16)"/>
+                <circle cx="316" cy="143" r="20" fill="rgba(133,219,255,.45)"/>
+                <path d="M308 143L314 149L326 136" stroke="#fff" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+            </div>
           </div>
-          <div className="bg-white/10 rounded-2xl p-5 border border-white/20">
+
+          <div className="relative z-10 bg-white/10 rounded-2xl p-5 border border-white/20 mt-6">
             <p className="text-xs text-blue-100 mb-2">حساب‌های نمایشی</p>
             <div className="flex gap-2 text-xs font-mono">
               <span className="bg-white/20 rounded-lg px-2 py-1">admin</span>
@@ -64,6 +90,8 @@ const Login: React.FC<LoginProps> = ({ onLogin, isDarkMode, toggleTheme }) => {
             </div>
           </div>
         </div>
+
+        
 
         <div className="bg-white/70 dark:bg-slate-900/70 backdrop-blur-2xl rounded-[2.5rem] shadow-[0_24px_60px_rgba(15,23,42,0.18)] border border-white/80 dark:border-slate-700/70 p-8 md:p-10">
           <div className="flex flex-col items-center mb-8">
