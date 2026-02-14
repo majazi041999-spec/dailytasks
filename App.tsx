@@ -514,7 +514,7 @@ const App: React.FC = () => {
     }
 
     if (!isAuthenticated) {
-        return <Login onLogin={handleLogin} />;
+        return <Login onLogin={handleLogin} isDarkMode={isDarkMode} toggleTheme={toggleTheme} />;
     }
 
     if (!currentUser) {
