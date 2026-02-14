@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect, useRef } from 'react';
-import { LayoutDashboard, Calendar, ClipboardList, History, LogOut, MessageSquare, Bell, Upload, Volume2, Users, Settings, Moon, Sun, BellRing, X, BarChart3 } from 'lucide-react';
+import { LayoutDashboard, Calendar, ClipboardList, History, LogOut, MessageSquare, Bell, Upload, Volume2, Users, Settings, Moon, Sun, BellRing, X, BarChart3, Menu } from 'lucide-react';
 import { User, Notification, Task, CalendarEvent } from '../types';
 import { MockBackend } from '../services/mockBackend';
 
@@ -26,6 +26,7 @@ const Layout: React.FC<LayoutProps> = ({ children, activeTab, onTabChange, curre
     const [activeAlarms, setActiveAlarms] = useState<TriggeredAlarm[]>([]);
     const audioRef = useRef<HTMLAudioElement | null>(null);
     const [audioError, setAudioError] = useState(false);
+    const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
 
     useEffect(() => {
         const checkSystem = async () => {
@@ -156,6 +157,10 @@ const Layout: React.FC<LayoutProps> = ({ children, activeTab, onTabChange, curre
         }
     };
 
+
+    useEffect(() => {
+        setMobileSidebarOpen(false);
+    }, [activeTab]);
     const menuItems = [
         { id: 'board', label: 'دسکتاپ', icon: <LayoutDashboard size={20} /> },
         { id: 'list', label: 'تسک‌ها', icon: <ClipboardList size={20} /> },
@@ -216,9 +221,35 @@ const Layout: React.FC<LayoutProps> = ({ children, activeTab, onTabChange, curre
                 </div>
             )}
 
+            <div className="lg:hidden fixed top-0 right-0 left-0 z-20 bg-white/70 dark:bg-slate-900/70 backdrop-blur-xl border-b border-white/60 dark:border-slate-700/60 px-4 py-3 flex items-center justify-between">
+                <button
+                    onClick={() => setMobileSidebarOpen(true)}
+                    className="p-2 rounded-xl bg-white/70 dark:bg-slate-800/70 border border-white/70 dark:border-slate-700 text-slate-700 dark:text-slate-200"
+                    aria-label="open sidebar"
+                >
+                    <Menu size={20} />
+                </button>
+                <div className="flex items-center gap-2">
+                    <img src="/taskchi-logo.svg" alt="لوگوی تسکچی" className="w-9 h-9 rounded-xl border border-white/70 dark:border-blue-300/30" />
+                    <span className="font-black text-sm text-slate-800 dark:text-white">تسکچی</span>
+                </div>
+                <button
+                    onClick={toggleTheme}
+                    className="p-2 rounded-xl bg-white/70 dark:bg-slate-800/70 border border-white/70 dark:border-slate-700 text-slate-700 dark:text-slate-200"
+                    aria-label="toggle theme"
+                >
+                    {isDarkMode ? <Sun size={18} /> : <Moon size={18} />}
+                </button>
+            </div>
+
+            {mobileSidebarOpen && (
+                <div className="lg:hidden fixed inset-0 z-20 bg-black/30" onClick={() => setMobileSidebarOpen(false)}></div>
+            )}
+
             {/* Glass Sidebar */}
-            <aside className="w-72 bg-white/40 dark:bg-gray-900/60 backdrop-blur-2xl border-l border-white/20 dark:border-white/10 shadow-[0_0_40px_rgba(0,0,0,0.05)] flex flex-col fixed h-full z-20 right-0 top-0 transition-all">
-                <div className="p-8 flex items-center gap-4">
+            <aside className={`w-72 bg-white/40 dark:bg-gray-900/60 backdrop-blur-2xl border-l border-white/20 dark:border-white/10 shadow-[0_0_40px_rgba(0,0,0,0.05)] flex flex-col fixed h-full z-30 right-0 top-0 transition-all duration-300 ${mobileSidebarOpen ? "translate-x-0" : "translate-x-full"} lg:translate-x-0`}>
+                <div className="p-8 flex items-center gap-4 relative">
+                    <button onClick={() => setMobileSidebarOpen(false)} className="lg:hidden absolute top-4 left-4 p-2 rounded-xl bg-white/70 dark:bg-slate-800/70 text-slate-700 dark:text-slate-200"><X size={16} /></button>
                     <img src="/taskchi-logo.svg" alt="لوگوی تسکچی" className="w-20 h-20 rounded-3xl shadow-xl shadow-blue-500/25 object-cover border-2 border-white/70 dark:border-blue-300/30" />
                     <div>
                         <h1 className="text-2xl font-black text-gray-800 dark:text-white tracking-tight">تسکچی</h1>
@@ -279,7 +310,7 @@ const Layout: React.FC<LayoutProps> = ({ children, activeTab, onTabChange, curre
             </aside>
 
             {/* Main Content */}
-            <main className="flex-1 mr-72 p-10 overflow-y-auto h-screen relative bg-transparent">
+            <main className="flex-1 mr-0 lg:mr-72 pt-20 lg:pt-10 p-4 sm:p-6 lg:p-10 overflow-y-auto h-screen relative bg-transparent">
                 {children}
             </main>
         </div>

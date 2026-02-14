@@ -29,56 +29,72 @@ const Login: React.FC<LoginProps> = ({ onLogin, isDarkMode, toggleTheme }) => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center relative overflow-hidden bg-slate-100 dark:bg-[#0b1029] p-6 transition-colors duration-300">
+    <div className="min-h-screen flex items-center justify-center relative overflow-hidden bg-slate-100 dark:bg-[#0b1029] p-4 md:p-6 transition-colors duration-300">
       <div className="absolute inset-0 pointer-events-none">
         <div className="absolute -top-20 -left-20 w-[32rem] h-[32rem] bg-blue-400/30 dark:bg-blue-600/20 blur-[120px] rounded-full" />
         <div className="absolute -bottom-20 -right-20 w-[30rem] h-[30rem] bg-violet-400/30 dark:bg-indigo-700/20 blur-[120px] rounded-full" />
       </div>
 
-
-      <div className="login-scene" aria-hidden="true">
-        <svg viewBox="0 0 820 420" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <div className="login-scene-bg" aria-hidden="true">
+        <svg viewBox="0 0 1100 560" fill="none" xmlns="http://www.w3.org/2000/svg" className="login-scene-bg-svg">
           <defs>
-            <linearGradient id="sceneCard" x1="0" y1="0" x2="1" y2="1">
-              <stop offset="0%" stopColor="currentColor" stopOpacity="0.20"/>
-              <stop offset="100%" stopColor="currentColor" stopOpacity="0.05"/>
+            <linearGradient id="bgCard" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0%" stopColor="currentColor" stopOpacity="0.26"/>
+              <stop offset="100%" stopColor="currentColor" stopOpacity="0.08"/>
             </linearGradient>
           </defs>
-
           <g className="text-blue-700 dark:text-blue-300">
-            <ellipse cx="410" cy="340" rx="290" ry="58" fill="currentColor" opacity="0.08"/>
+            <ellipse cx="550" cy="480" rx="330" ry="64" fill="currentColor" opacity="0.11"/>
 
-            <rect x="120" y="120" width="220" height="150" rx="22" fill="url(#sceneCard)" stroke="currentColor" strokeOpacity="0.22" strokeWidth="2"/>
-            <rect x="138" y="145" width="130" height="14" rx="7" fill="currentColor" opacity="0.25"/>
-            <rect x="138" y="170" width="176" height="10" rx="5" fill="currentColor" opacity="0.18"/>
-            <rect x="138" y="189" width="158" height="10" rx="5" fill="currentColor" opacity="0.16"/>
-            <circle className="task-pulse" cx="292" cy="235" r="14" fill="currentColor" opacity="0.5"/>
-            <path d="M286 235L291 240L300 229" stroke="white" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"/>
+            <rect x="120" y="160" width="260" height="170" rx="22" fill="url(#bgCard)" stroke="currentColor" strokeOpacity="0.24" strokeWidth="2"/>
+            <rect x="144" y="192" width="140" height="12" rx="6" fill="currentColor" opacity="0.30"/>
+            <rect x="144" y="214" width="202" height="10" rx="5" fill="currentColor" opacity="0.20"/>
+            <rect x="144" y="233" width="184" height="10" rx="5" fill="currentColor" opacity="0.18"/>
+            <rect x="144" y="252" width="150" height="10" rx="5" fill="currentColor" opacity="0.16"/>
 
-            <circle cx="240" cy="272" r="26" fill="currentColor" opacity="0.25"/>
-            <rect x="214" y="296" width="54" height="72" rx="18" fill="currentColor" opacity="0.2"/>
+            <circle className="task-pulse" cx="332" cy="286" r="14" fill="currentColor" opacity="0.56"/>
+            <path d="M326 286L331 291L341 279" stroke="white" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"/>
+
+            <circle cx="260" cy="356" r="28" fill="currentColor" opacity="0.28"/>
+            <rect x="230" y="384" width="60" height="86" rx="18" fill="currentColor" opacity="0.22"/>
             <g className="worker-arm">
-              <rect x="252" y="304" width="14" height="66" rx="7" fill="currentColor" opacity="0.32"/>
+              <rect x="284" y="392" width="16" height="78" rx="8" fill="currentColor" opacity="0.35"/>
             </g>
 
-            <circle className="manager-head" cx="392" cy="174" r="24" fill="currentColor" opacity="0.26"/>
-            <rect x="366" y="198" width="56" height="72" rx="18" fill="currentColor" opacity="0.22"/>
-            <rect x="424" y="210" width="78" height="54" rx="10" fill="url(#sceneCard)" stroke="currentColor" strokeOpacity="0.25"/>
-            <path d="M438 228H488M438 244H477" stroke="currentColor" strokeOpacity="0.30" strokeWidth="4" strokeLinecap="round"/>
+            <circle cx="558" cy="238" r="26" fill="currentColor" opacity="0.29"/>
+            <rect x="528" y="266" width="62" height="86" rx="18" fill="currentColor" opacity="0.24"/>
+            <g className="manager-arm">
+              <rect x="588" y="292" width="84" height="16" rx="8" fill="currentColor" opacity="0.31"/>
+            </g>
+
+            <rect x="670" y="262" width="172" height="112" rx="16" fill="url(#bgCard)" stroke="currentColor" strokeOpacity="0.26"/>
+            <path d="M698 294H812M698 322H794M698 350H772" stroke="currentColor" strokeOpacity="0.36" strokeWidth="5" strokeLinecap="round"/>
+            <circle cx="816" cy="334" r="20" fill="currentColor" opacity="0.28"/>
+            <path d="M806 334L813 341L827 327" stroke="white" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round"/>
+
+            <circle className="scene-spark" cx="116" cy="122" r="5" fill="currentColor"/>
+            <circle className="scene-spark" cx="418" cy="118" r="3" fill="currentColor"/>
+            <circle className="scene-spark" cx="504" cy="138" r="4" fill="currentColor"/>
+            <circle className="scene-spark" cx="854" cy="174" r="5" fill="currentColor"/>
+            <circle className="scene-spark" cx="912" cy="386" r="4" fill="currentColor"/>
+            <circle className="scene-spark" cx="160" cy="414" r="3" fill="currentColor"/>
+            <circle className="scene-spark" cx="472" cy="454" r="3" fill="currentColor"/>
+
+            <rect x="210" y="500" width="590" height="16" rx="8" fill="currentColor" opacity="0.10"/>
           </g>
         </svg>
       </div>
 
       <button
         onClick={toggleTheme}
-        className="absolute top-6 left-6 z-20 bg-white/70 dark:bg-slate-900/70 border border-white/80 dark:border-slate-700 rounded-2xl px-4 py-2 text-xs font-bold text-slate-700 dark:text-slate-200 flex items-center gap-2 backdrop-blur-xl hover:scale-105 transition"
+        className="absolute top-4 left-4 md:top-6 md:left-6 z-20 bg-white/70 dark:bg-slate-900/70 border border-white/80 dark:border-slate-700 rounded-2xl px-4 py-2 text-xs font-bold text-slate-700 dark:text-slate-200 flex items-center gap-2 backdrop-blur-xl hover:scale-105 transition"
       >
         {isDarkMode ? <Sun size={15} /> : <Moon size={15} />}
         {isDarkMode ? 'حالت روشن' : 'حالت تاریک'}
       </button>
 
-      <div className="relative z-10 w-full max-w-5xl grid grid-cols-1 lg:grid-cols-2 gap-6 items-stretch">
-        <div className="hidden lg:flex flex-col justify-between bg-gradient-to-br from-blue-600 to-indigo-700 text-white rounded-[2.5rem] p-10 shadow-2xl shadow-blue-900/30 overflow-hidden relative">
+      <div className="relative z-10 w-full max-w-6xl grid grid-cols-1 lg:grid-cols-2 gap-6 items-stretch">
+        <div className="hidden lg:flex flex-col justify-between bg-gradient-to-br from-blue-600 to-indigo-700 text-white rounded-[2.5rem] p-8 xl:p-10 shadow-2xl shadow-blue-900/30 overflow-hidden relative">
           <div className="absolute -top-8 -right-8 w-40 h-40 bg-white/15 rounded-full blur-2xl" />
           <div className="absolute -bottom-10 -left-10 w-44 h-44 bg-indigo-300/20 rounded-full blur-2xl" />
 
@@ -87,7 +103,7 @@ const Login: React.FC<LoginProps> = ({ onLogin, isDarkMode, toggleTheme }) => {
               <Sparkles size={14} />
               نسخه حرفه‌ای مدیریت کار تیم
             </div>
-            <h2 className="text-4xl font-black leading-tight mb-4">ورود به تسکچی</h2>
+            <h2 className="text-3xl xl:text-4xl font-black leading-tight mb-4">ورود به تسکچی</h2>
             <p className="text-blue-100 text-sm leading-7 mb-8">
               فضای کاری یکپارچه برای مدیریت تسک‌ها، پیام‌ها، گزارش عملکرد و هماهنگی تیمی در لحظه.
             </p>
@@ -125,11 +141,9 @@ const Login: React.FC<LoginProps> = ({ onLogin, isDarkMode, toggleTheme }) => {
           </div>
         </div>
 
-        
-
-        <div className="bg-white/70 dark:bg-slate-900/70 backdrop-blur-2xl rounded-[2.5rem] shadow-[0_24px_60px_rgba(15,23,42,0.18)] border border-white/80 dark:border-slate-700/70 p-8 md:p-10">
+        <div className="bg-white/75 dark:bg-slate-900/75 backdrop-blur-2xl rounded-[2.5rem] shadow-[0_24px_60px_rgba(15,23,42,0.18)] border border-white/80 dark:border-slate-700/70 p-6 sm:p-8 md:p-10">
           <div className="flex flex-col items-center mb-8">
-            <img src="/taskchi-logo.svg" alt="لوگوی تسکچی" className="w-32 h-32 rounded-[2rem] shadow-xl shadow-blue-500/25 object-cover mb-4 border-2 border-white/80 dark:border-blue-300/30" />
+            <img src="/taskchi-logo.svg" alt="لوگوی تسکچی" className="w-24 h-24 sm:w-28 sm:h-28 md:w-32 md:h-32 rounded-[2rem] shadow-xl shadow-blue-500/25 object-cover mb-4 border-2 border-white/80 dark:border-blue-300/30" />
             <h1 className="text-2xl md:text-3xl font-black text-slate-900 dark:text-white tracking-tight">ورود به پنل مدیریت</h1>
             <p className="text-slate-500 dark:text-slate-400 text-sm mt-2">با حساب کاربری خود وارد شوید</p>
           </div>
