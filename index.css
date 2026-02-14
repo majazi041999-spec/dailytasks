@@ -157,3 +157,65 @@ body.dark .login-input-wrap:focus-within .login-input-icon {
 .login-submit-btn:not(:disabled):hover {
     animation: pulseRing 1.4s ease-out infinite;
 }
+
+
+/* Login Background Story Animation */
+@keyframes sceneDrift {
+  0%,100% { transform: translateY(0px) scale(1); opacity: .22; }
+  50% { transform: translateY(-8px) scale(1.01); opacity: .28; }
+}
+
+@keyframes workerTick {
+  0%,100% { transform: rotate(0deg); }
+  40% { transform: rotate(-4deg); }
+  70% { transform: rotate(3deg); }
+}
+
+@keyframes managerObserve {
+  0%,100% { transform: translateY(0px); }
+  50% { transform: translateY(-3px); }
+}
+
+@keyframes pulseTask {
+  0%,100% { opacity: .35; }
+  50% { opacity: .8; }
+}
+
+.login-scene {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  z-index: 0;
+}
+
+.login-scene svg {
+  width: min(1100px, 94vw);
+  height: auto;
+  animation: sceneDrift 9s ease-in-out infinite;
+}
+
+.login-scene .worker-arm {
+  transform-origin: 252px 270px;
+  animation: workerTick 2.8s ease-in-out infinite;
+}
+
+.login-scene .manager-head {
+  transform-origin: 392px 174px;
+  animation: managerObserve 3.6s ease-in-out infinite;
+}
+
+.login-scene .task-pulse {
+  animation: pulseTask 1.8s ease-in-out infinite;
+}
+
+body.dark .login-scene svg {
+  opacity: .22;
+}
+
+body:not(.dark) .login-scene svg {
+  opacity: .18;
+}

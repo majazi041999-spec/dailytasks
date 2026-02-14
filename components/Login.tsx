@@ -35,6 +35,40 @@ const Login: React.FC<LoginProps> = ({ onLogin, isDarkMode, toggleTheme }) => {
         <div className="absolute -bottom-20 -right-20 w-[30rem] h-[30rem] bg-violet-400/30 dark:bg-indigo-700/20 blur-[120px] rounded-full" />
       </div>
 
+
+      <div className="login-scene" aria-hidden="true">
+        <svg viewBox="0 0 820 420" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <linearGradient id="sceneCard" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0%" stopColor="currentColor" stopOpacity="0.20"/>
+              <stop offset="100%" stopColor="currentColor" stopOpacity="0.05"/>
+            </linearGradient>
+          </defs>
+
+          <g className="text-blue-700 dark:text-blue-300">
+            <ellipse cx="410" cy="340" rx="290" ry="58" fill="currentColor" opacity="0.08"/>
+
+            <rect x="120" y="120" width="220" height="150" rx="22" fill="url(#sceneCard)" stroke="currentColor" strokeOpacity="0.22" strokeWidth="2"/>
+            <rect x="138" y="145" width="130" height="14" rx="7" fill="currentColor" opacity="0.25"/>
+            <rect x="138" y="170" width="176" height="10" rx="5" fill="currentColor" opacity="0.18"/>
+            <rect x="138" y="189" width="158" height="10" rx="5" fill="currentColor" opacity="0.16"/>
+            <circle className="task-pulse" cx="292" cy="235" r="14" fill="currentColor" opacity="0.5"/>
+            <path d="M286 235L291 240L300 229" stroke="white" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"/>
+
+            <circle cx="240" cy="272" r="26" fill="currentColor" opacity="0.25"/>
+            <rect x="214" y="296" width="54" height="72" rx="18" fill="currentColor" opacity="0.2"/>
+            <g className="worker-arm">
+              <rect x="252" y="304" width="14" height="66" rx="7" fill="currentColor" opacity="0.32"/>
+            </g>
+
+            <circle className="manager-head" cx="392" cy="174" r="24" fill="currentColor" opacity="0.26"/>
+            <rect x="366" y="198" width="56" height="72" rx="18" fill="currentColor" opacity="0.22"/>
+            <rect x="424" y="210" width="78" height="54" rx="10" fill="url(#sceneCard)" stroke="currentColor" strokeOpacity="0.25"/>
+            <path d="M438 228H488M438 244H477" stroke="currentColor" strokeOpacity="0.30" strokeWidth="4" strokeLinecap="round"/>
+          </g>
+        </svg>
+      </div>
+
       <button
         onClick={toggleTheme}
         className="absolute top-6 left-6 z-20 bg-white/70 dark:bg-slate-900/70 border border-white/80 dark:border-slate-700 rounded-2xl px-4 py-2 text-xs font-bold text-slate-700 dark:text-slate-200 flex items-center gap-2 backdrop-blur-xl hover:scale-105 transition"
