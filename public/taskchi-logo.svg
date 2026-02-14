@@ -1,0 +1,64 @@
+<svg width="512" height="512" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <style>
+      :root {
+        --bg1: #ecf3ff;
+        --bg2: #cadbff;
+        --ring: #4168ff;
+        --card: #ffffff;
+        --ink: #1f2a44;
+        --accent: #3768ff;
+        --accent2: #6c90ff;
+      }
+      @media (prefers-color-scheme: dark) {
+        :root {
+          --bg1: #0f173b;
+          --bg2: #1b2661;
+          --ring: #8eb0ff;
+          --card: #162148;
+          --ink: #dee8ff;
+          --accent: #7aa4ff;
+          --accent2: #9abaff;
+        }
+      }
+    </style>
+    <linearGradient id="bg" x1="80" y1="80" x2="432" y2="432" gradientUnits="userSpaceOnUse">
+      <stop stop-color="var(--bg1)"/>
+      <stop offset="1" stop-color="var(--bg2)"/>
+    </linearGradient>
+  </defs>
+
+  <circle cx="256" cy="256" r="208" fill="url(#bg)"/>
+  <circle cx="256" cy="256" r="198" stroke="var(--ring)" stroke-width="10"/>
+
+  <g transform="translate(92 122)">
+    <rect x="0" y="0" width="148" height="124" rx="16" fill="var(--card)" stroke="var(--ring)" stroke-width="6"/>
+    <rect x="0" y="0" width="148" height="32" rx="12" fill="var(--accent)"/>
+    <path d="M20 52H128M20 78H128M20 104H128M50 34V112M82 34V112" stroke="var(--accent2)" stroke-width="3" opacity="0.85"/>
+    <path d="M30 87L40 96L56 79" stroke="var(--accent)" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/>
+  </g>
+
+  <g transform="translate(314 132)">
+    <circle cx="56" cy="56" r="52" fill="var(--card)" stroke="var(--ring)" stroke-width="8"/>
+    <circle cx="56" cy="56" r="5" fill="var(--accent)"/>
+    <path d="M56 56L56 32M56 56L74 56M56 56L42 44" stroke="var(--accent)" stroke-width="6" stroke-linecap="round"/>
+  </g>
+
+  <g transform="translate(174 170) rotate(6)">
+    <rect x="0" y="0" width="166" height="210" rx="18" fill="var(--card)" stroke="var(--ring)" stroke-width="8"/>
+    <rect x="52" y="-10" width="62" height="20" rx="8" fill="var(--ring)"/>
+    <g transform="translate(22 46)">
+      <rect x="0" y="0" width="22" height="22" rx="5" fill="var(--accent)"/>
+      <path d="M5 12L10 17L18 7" stroke="white" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/>
+      <path d="M34 12H118" stroke="var(--ink)" stroke-width="5" stroke-linecap="round"/>
+
+      <rect x="0" y="46" width="22" height="22" rx="5" fill="var(--accent)"/>
+      <path d="M5 58L10 63L18 53" stroke="white" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/>
+      <path d="M34 58H118" stroke="var(--ink)" stroke-width="5" stroke-linecap="round"/>
+
+      <rect x="0" y="92" width="22" height="22" rx="5" fill="var(--accent)"/>
+      <path d="M5 104L10 109L18 99" stroke="white" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/>
+      <path d="M34 104H118" stroke="var(--ink)" stroke-width="5" stroke-linecap="round"/>
+    </g>
+  </g>
+</svg>
