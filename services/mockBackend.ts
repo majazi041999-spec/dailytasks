@@ -148,8 +148,16 @@ export const MockBackend = {
     },
 
     getOnlineUserIds: async (): Promise<string[]> => {
-        const response = await fetchJson('/presence');
-        return response?.onlineUserIds || [];
+        try {
+            const response = await fetchJson('/presence');
+            return response?.onlineUserIds || [];
+        } catch (e: any) {
+            // Backward compatibility: older backend versions may not expose /api/presence yet.
+            if (e?.message?.includes('404')) {
+                return [];
+            }
+            throw e;
+        }
     },
 
     saveUser: async (user: any): Promise<User> => {
